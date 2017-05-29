@@ -52,7 +52,7 @@ class Job:
     @property
     def kwargs(self):
         # TODO: exception handling
-        return json.loads(self.redis.hget(self.redis_key, 'kwargs') or '{}')
+        return json.loads(self.redis.hget(self.redis_key, 'kwargs').decode())
 
     @property
     def callable_name(self):

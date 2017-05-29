@@ -15,7 +15,7 @@ def test_unjsonable_retval(redis, random_queue_name):
     Worker.for_queue_names(redis, random_queue_name).tick()
     assert job.status == JobStatus.FAILED
     assert job.result['exception_type'] == 'TypeError'
-    assert job.result['exception_value'] == 'Object of type \'datetime\' is not JSON serializable'
+    assert 'not JSON serializable' in job.result['exception_value']
 
 
 def test_disappeared_job(redis, random_queue_name):
