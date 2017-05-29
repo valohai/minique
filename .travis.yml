@@ -1,0 +1,16 @@
+sudo: false
+language: python
+python:
+  - "3.5"
+  - "3.6"
+services:
+  - redis-server
+install:
+  - "pip install -e .[dev]"
+env:
+  - REDIS_URL=redis://localhost:6379/0
+script:
+  - flake8 minique
+  - py.test -vvv --cov .
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
