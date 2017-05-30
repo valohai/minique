@@ -34,6 +34,10 @@ class Job:
         return self.redis.exists(self.result_redis_key)
 
     @property
+    def has_started(self):
+        return self.redis.hexists(self.redis_key, 'acquired')
+
+    @property
     def result(self):
         # TODO: exception handling
         return json.loads(self.redis.get(self.result_redis_key).decode())
