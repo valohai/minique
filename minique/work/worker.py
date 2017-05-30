@@ -2,6 +2,7 @@ import logging
 from os import getpid
 from platform import node
 
+from minique.enums import JobStatus
 from minique.models.job import Job
 from minique.models.queue import Queue
 from minique.work.job_runner import JobRunner
@@ -38,6 +39,18 @@ class Worker:
         job = self.get_next_job()
         if not job:
             return None
+        job.ensure_exists()
+        if job.status == JobStatus.CANCELLED:  # Simply skip running cancelled jobs
+            return None
         runner = JobRunner(worker=self, job=job)
         runner.run()
         return job
+
+    def loop(self):  # pragma: no cover
+        while True:
+            try:
+                self.tick()
+            except KeyboardInterrupt:
+                break
+            except:
+                self.log.error('Unexpected worker tick error', exc_info=True)

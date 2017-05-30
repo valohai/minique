@@ -6,3 +6,4 @@ class JobStatus(Enum):
     ACQUIRED = 'acquired'
     SUCCESS = 'success'
     FAILED = 'failed'
+    CANCELLED = 'cancelled'

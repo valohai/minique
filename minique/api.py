@@ -36,5 +36,19 @@ def enqueue(redis, queue_name, callable, kwargs=None, job_id=None, job_ttl=0, re
             p.expire(job.redis_key, payload['job_ttl'])
         p.rpush(queue.redis_key, job.id)
         p.execute()
-        assert job.exists
+        job.ensure_exists()
     return job
+
+
+def get_job(redis, job_id):
+    job = Job(redis, job_id)
+    job.ensure_exists()
+    return job
+
+
+def cancel_job(redis, job_id):
+    job = get_job(redis, job_id)
+    if not job.has_finished:
+        redis.hset(job.redis_key, 'status', JobStatus.CANCELLED.value)
+        return True
+    return False

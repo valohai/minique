@@ -16,10 +16,4 @@ def main():
     redis = StrictRedis.from_url(args.redis_url)
     worker = Worker.for_queue_names(redis=redis, queue_names=args.queues)
     worker.log.info('Worker initialized')
-    while True:
-        try:
-            worker.tick()
-        except KeyboardInterrupt:
-            break
-        except:
-            worker.log.error('Unexpected worker tick error', exc_info=True)
+    worker.loop()

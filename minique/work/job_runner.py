@@ -7,7 +7,7 @@ import traceback
 from redis import StrictRedis
 
 from minique.enums import JobStatus
-from minique.excs import AlreadyAcquired, AlreadyResulted, NoSuchJob
+from minique.excs import AlreadyAcquired, AlreadyResulted
 from minique.models.job import Job
 from minique.utils import _set_current_job, import_by_string
 
@@ -20,9 +20,7 @@ class JobRunner:
         self.redis = job.redis
         assert isinstance(self.redis, StrictRedis)
         self.log = logging.getLogger('{}.{}'.format(__name__, self.job.id.replace('.', '_')))
-
-        if not job.exists:
-            raise NoSuchJob('no such job: {id}'.format(id=self.job.id))
+        job.ensure_exists()
 
     def acquire(self):
         new_acquisition_info = json.dumps({'worker': self.worker.id, 'time': time.time()})
@@ -32,6 +30,7 @@ class JobRunner:
                 info=self.job.acquisition_info,
             ))
         self.redis.hset(self.job.redis_key, 'status', JobStatus.ACQUIRED.value)
+        self.redis.persist(self.job.redis_key)
 
     def execute(self):
         func = import_by_string(self.job.callable_name)
@@ -58,13 +57,16 @@ class JobRunner:
             self.log.warning('errored in %f seconds', duration)
 
     def run(self):
+        interrupt = False
+        success = False
+        value = {'error': 'unknown'}
         self.acquire()
         start_time = time.time()
         try:
             value = self.execute()
             value = json.dumps(value)
             success = True
-        except Exception:
+        except BaseException as exc:
             success = False
             exc_type, exc_value, exc_tb = sys.exc_info()
             value = json.dumps({
@@ -72,5 +74,9 @@ class JobRunner:
                 'exception_value': str(exc_value),
                 'traceback': traceback.format_exc(),
             })
-        end_time = time.time()
-        self.complete(success=success, value=value, duration=(end_time - start_time))
+            interrupt = isinstance(exc, KeyboardInterrupt)
+        finally:
+            end_time = time.time()
+            self.complete(success=success, value=value, duration=(end_time - start_time))
+        if interrupt:  # pragma: no cover
+            raise KeyboardInterrupt('Interrupt')
