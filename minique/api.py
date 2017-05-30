@@ -44,3 +44,11 @@ def get_job(redis, job_id):
     job = Job(redis, job_id)
     job.ensure_exists()
     return job
+
+
+def cancel_job(redis, job_id):
+    job = get_job(redis, job_id)
+    if not job.has_finished:
+        redis.hset(job.redis_key, 'status', JobStatus.CANCELLED.value)
+        return True
+    return False

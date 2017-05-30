@@ -1,7 +1,8 @@
 import pytest
 
-from minique.api import enqueue, get_job
+from minique.api import enqueue, get_job, cancel_job
 from minique.enums import JobStatus
+from minique.models.queue import Queue
 from minique.testing import run_synchronously
 from minique.work.worker import Worker
 from minique_tests.jobs import reverse_job_id
@@ -36,3 +37,11 @@ def test_job_object_access(redis, random_queue_name):
     job = enqueue(redis, random_queue_name, reverse_job_id)
     run_synchronously(job)
     assert job.result == job.id[::-1]
+
+
+def test_cancel(redis, random_queue_name):
+    job = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values')
+    assert Queue(redis, random_queue_name).length == 1
+    cancel_job(redis, job.id)
+    assert Queue(redis, random_queue_name).length == 1  # Canceling does not remove the job from the queue
+    worker = Worker.for_queue_names(redis, random_queue_name).tick()
