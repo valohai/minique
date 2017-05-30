@@ -12,9 +12,10 @@ if __name__ == '__main__':
     setuptools.setup(
         name='minique',
         description='Minimal Redis job runner',
-        version='0.0.0',
+        version='0.1.0',
         url='https://github.com/valohai/minique',
         author='Valohai',
+        author_email='hait@valohai.com',
         maintainer='Aarni Koskela',
         maintainer_email='akx@iki.fi',
         license='MIT',
