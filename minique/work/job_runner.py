@@ -32,6 +32,7 @@ class JobRunner:
                 info=self.job.acquisition_info,
             ))
         self.redis.hset(self.job.redis_key, 'status', JobStatus.ACQUIRED.value)
+        self.redis.persist(self.job.redis_key)
 
     def execute(self):
         func = import_by_string(self.job.callable_name)
