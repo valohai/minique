@@ -36,5 +36,5 @@ def enqueue(redis, queue_name, callable, kwargs=None, job_id=None, job_ttl=0, re
             p.expire(job.redis_key, payload['job_ttl'])
         p.rpush(queue.redis_key, job.id)
         p.execute()
-        assert job.exists
+        job.ensure_exists()
     return job

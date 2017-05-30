@@ -7,7 +7,7 @@ import traceback
 from redis import StrictRedis
 
 from minique.enums import JobStatus
-from minique.excs import AlreadyAcquired, AlreadyResulted, NoSuchJob
+from minique.excs import AlreadyAcquired, AlreadyResulted
 from minique.models.job import Job
 from minique.utils import _set_current_job, import_by_string
 
@@ -20,9 +20,7 @@ class JobRunner:
         self.redis = job.redis
         assert isinstance(self.redis, StrictRedis)
         self.log = logging.getLogger('{}.{}'.format(__name__, self.job.id.replace('.', '_')))
-
-        if not job.exists:
-            raise NoSuchJob('no such job: {id}'.format(id=self.job.id))
+        job.ensure_exists()
 
     def acquire(self):
         new_acquisition_info = json.dumps({'worker': self.worker.id, 'time': time.time()})

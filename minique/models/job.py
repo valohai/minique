@@ -4,6 +4,7 @@ from redis import StrictRedis
 
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
 from minique.enums import JobStatus
+from minique.excs import NoSuchJob
 
 
 class Job:
@@ -11,6 +12,10 @@ class Job:
         self.redis = redis
         assert isinstance(id, str)
         self.id = id
+
+    def ensure_exists(self):
+        if not self.exists:
+            raise NoSuchJob('Job {id} does not exist'.format(id=self.id))
 
     @property
     def redis_key(self):
