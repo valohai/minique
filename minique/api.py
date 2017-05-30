@@ -38,3 +38,9 @@ def enqueue(redis, queue_name, callable, kwargs=None, job_id=None, job_ttl=0, re
         p.execute()
         job.ensure_exists()
     return job
+
+
+def get_job(redis, job_id):
+    job = Job(redis, job_id)
+    job.ensure_exists()
+    return job
