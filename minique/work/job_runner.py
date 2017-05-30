@@ -57,13 +57,16 @@ class JobRunner:
             self.log.warning('errored in %f seconds', duration)
 
     def run(self):
+        interrupt = False
+        success = False
+        value = {'error': 'unknown'}
         self.acquire()
         start_time = time.time()
         try:
             value = self.execute()
             value = json.dumps(value)
             success = True
-        except Exception:
+        except BaseException as exc:
             success = False
             exc_type, exc_value, exc_tb = sys.exc_info()
             value = json.dumps({
@@ -71,5 +74,9 @@ class JobRunner:
                 'exception_value': str(exc_value),
                 'traceback': traceback.format_exc(),
             })
-        end_time = time.time()
-        self.complete(success=success, value=value, duration=(end_time - start_time))
+            interrupt = isinstance(exc, KeyboardInterrupt)
+        finally:
+            end_time = time.time()
+            self.complete(success=success, value=value, duration=(end_time - start_time))
+        if interrupt:  # pragma: no cover
+            raise KeyboardInterrupt('Interrupt')
