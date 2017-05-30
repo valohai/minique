@@ -2,6 +2,7 @@ import pytest
 
 from minique.api import enqueue, get_job
 from minique.enums import JobStatus
+from minique.testing import run_synchronously
 from minique.work.worker import Worker
 from minique_tests.jobs import reverse_job_id
 
@@ -33,5 +34,5 @@ def test_worker_empty_queue(redis, random_queue_name):
 
 def test_job_object_access(redis, random_queue_name):
     job = enqueue(redis, random_queue_name, reverse_job_id)
-    Worker.for_queue_names(redis, random_queue_name).tick()
+    run_synchronously(job)
     assert job.result == job.id[::-1]
