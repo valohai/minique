@@ -41,3 +41,12 @@ class Worker:
         runner = JobRunner(worker=self, job=job)
         runner.run()
         return job
+
+    def loop(self):  # pragma: no cover
+        while True:
+            try:
+                self.tick()
+            except KeyboardInterrupt:
+                break
+            except:
+                self.log.error('Unexpected worker tick error', exc_info=True)
