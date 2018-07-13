@@ -1,4 +1,13 @@
+import os
+import re
+
 import setuptools
+
+
+def get_version(package):
+    init_py = open(os.path.join(package, '__init__.py')).read()
+    return re.search("__version__ = '(.+?)'", init_py).group(1)
+
 
 dev_dependencies = [
     'flake8',
@@ -12,7 +21,7 @@ if __name__ == '__main__':
     setuptools.setup(
         name='minique',
         description='Minimal Redis job runner',
-        version='0.1.0',
+        version=get_version('minique'),
         url='https://github.com/valohai/minique',
         author='Valohai',
         author_email='hait@valohai.com',
