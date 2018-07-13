@@ -10,6 +10,7 @@ from minique.work.job_runner import JobRunner
 
 class Worker:
     queue_timeout = 1
+    job_runner_class = JobRunner
 
     def __init__(self, redis, queues):
         self.id = self.compute_id()
@@ -42,7 +43,7 @@ class Worker:
         job.ensure_exists()
         if job.status == JobStatus.CANCELLED:  # Simply skip running cancelled jobs
             return None
-        runner = JobRunner(worker=self, job=job)
+        runner = self.job_runner_class(worker=self, job=job)
         runner.run()
         return job
 
