@@ -57,10 +57,10 @@ class JobRunner:
             self.log.warning('errored in %f seconds', duration)
 
     def run(self):
+        self.acquire()
         interrupt = False
         success = False
         value = {'error': 'unknown'}
-        self.acquire()
         start_time = time.time()
         try:
             value = self.execute()

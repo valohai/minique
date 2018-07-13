@@ -1,7 +1,7 @@
 *.egg
 *.egg-info/
 *.py[cod]
-.cache
+.*cache
 .coverage
 .eggs/
 .idea
