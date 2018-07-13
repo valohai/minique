@@ -53,5 +53,5 @@ class Worker:
                 self.tick()
             except KeyboardInterrupt:
                 break
-            except:
+            except:  # noqa
                 self.log.error('Unexpected worker tick error', exc_info=True)
