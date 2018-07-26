@@ -68,15 +68,27 @@ class JobRunner:
             success = True
         except BaseException as exc:
             success = False
-            exc_type, exc_value, exc_tb = sys.exc_info()
+            exc_type, exc_value, exc_tb = excinfo = sys.exc_info()
             value = json.dumps({
                 'exception_type': exc_type.__qualname__,
                 'exception_value': str(exc_value),
                 'traceback': traceback.format_exc(),
-            })
+            }, default=str)
             interrupt = isinstance(exc, KeyboardInterrupt)
+            try:
+                self.process_exception(excinfo)
+            except:  # noqa
+                self.log.warning('error running process_exception()', exc_info=True)
         finally:
             end_time = time.time()
             self.complete(success=success, value=value, duration=(end_time - start_time))
         if interrupt:  # pragma: no cover
             raise KeyboardInterrupt('Interrupt')
+
+    def process_exception(self, excinfo):  # pragma: no cover
+        """
+        A hook for subclasses to log (e.g. Sentry) or otherwise process exceptions.
+
+        :param excinfo: The sys.exc_info() 3-tuple
+        """
+        pass
