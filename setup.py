@@ -13,7 +13,7 @@ dev_dependencies = [
     'flake8',
     'isort',
     'pydocstyle',
-    'pytest',
+    'pytest>=4.3.0',
     'pytest-cov',
 ]
 
