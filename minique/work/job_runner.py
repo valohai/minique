@@ -33,11 +33,14 @@ class JobRunner:
         self.redis.persist(self.job.redis_key)
 
     def execute(self):
-        func = import_by_string(self.job.callable_name)
+        func = self.get_callable()
         kwargs = self.job.kwargs
         self.log.info('calling %s(%r)', func, kwargs)
         with _set_current_job(job=self.job):
             return func(**kwargs)
+
+    def get_callable(self):
+        return import_by_string(self.job.callable_name)
 
     def complete(self, success, value, duration):
         assert isinstance(success, bool)
