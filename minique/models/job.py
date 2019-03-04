@@ -59,6 +59,10 @@ class Job:
         return float(self.redis.hget(self.redis_key, 'duration'))
 
     @property
+    def queue_name(self):
+        return self.redis.hget(self.redis_key, 'queue').decode()
+
+    @property
     def kwargs(self):
         # TODO: exception handling
         return json.loads(self.redis.hget(self.redis_key, 'kwargs').decode())
@@ -66,6 +70,10 @@ class Job:
     @property
     def callable_name(self):
         return self.redis.hget(self.redis_key, 'callable').decode()
+
+    def get_queue(self):
+        from minique.models.queue import Queue
+        return Queue(redis=self.redis, name=self.queue_name)
 
     def __str__(self):
         return '<job %s>' % self.id
