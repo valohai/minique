@@ -43,5 +43,5 @@ def test_cancel(redis, random_queue_name):
     job = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values')
     assert Queue(redis, random_queue_name).length == 1
     cancel_job(redis, job.id)
-    assert Queue(redis, random_queue_name).length == 1  # Canceling does not remove the job from the queue
+    assert Queue(redis, random_queue_name).length == 0  # Canceling does remove the job from the queue
     worker = Worker.for_queue_names(redis, random_queue_name).tick()

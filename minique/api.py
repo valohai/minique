@@ -36,7 +36,7 @@ def enqueue(redis, queue_name, callable, kwargs=None, job_id=None, job_ttl=0, re
             p.expire(job.redis_key, payload['job_ttl'])
         p.rpush(queue.redis_key, job.id)
         p.execute()
-        job.ensure_exists()
+    job.ensure_exists()
     return job
 
 
@@ -47,8 +47,20 @@ def get_job(redis, job_id):
 
 
 def cancel_job(redis, job_id):
+    """
+    Cancel the job with the given job ID.
+
+    If a worker is already busy with the job, it may not immediately quit,
+    and as such, the job is not set to cancelled state.
+
+    :type redis: redis.StrictRedis
+    :param job_id: Job ID.
+    :raises minique.excs.NoSuchJob: if the job does not exist.
+    """
     job = get_job(redis, job_id)
-    if not job.has_finished:
+    if not (job.has_finished or job.has_started):
+        # Cancel the job and remove it from the queue it may be in.
         redis.hset(job.redis_key, 'status', JobStatus.CANCELLED.value)
+        redis.lrem(job.get_queue().redis_key, 0, job.id)
         return True
     return False
