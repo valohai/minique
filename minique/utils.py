@@ -1,3 +1,4 @@
+import json
 import random
 from contextlib import contextmanager
 from importlib import import_module
@@ -57,3 +58,14 @@ def get_random_pronounceable_string(length=12):
         s.append(random.choice(consonants))
         s.append(random.choice(vowels) * random.choice((1, 1, 2)))
     return ''.join(s)[:length]
+
+
+def get_json_or_none(value):
+    """
+    If the value is truthy, decode it as JSON. Otherwise return None.
+    """
+    if value:
+        if isinstance(value, bytes):
+            value = value.decode()
+        return json.loads(str(value))
+    return None

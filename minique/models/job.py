@@ -1,10 +1,9 @@
-import json
-
 from redis import StrictRedis
 
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
 from minique.enums import JobStatus
 from minique.excs import NoSuchJob
+from minique.utils import get_json_or_none
 
 
 class Job:
@@ -27,7 +26,7 @@ class Job:
 
     @property
     def acquisition_info(self):
-        return json.loads(self.redis.hget(self.redis_key, 'acquired').decode())
+        return get_json_or_none(self.redis.hget(self.redis_key, 'acquired'))
 
     @property
     def has_finished(self):
@@ -39,8 +38,7 @@ class Job:
 
     @property
     def result(self):
-        # TODO: exception handling
-        return json.loads(self.redis.get(self.result_redis_key).decode())
+        return get_json_or_none(self.redis.get(self.result_redis_key))
 
     @property
     def status(self):
@@ -64,8 +62,7 @@ class Job:
 
     @property
     def kwargs(self):
-        # TODO: exception handling
-        return json.loads(self.redis.hget(self.redis_key, 'kwargs').decode())
+        return get_json_or_none(self.redis.hget(self.redis_key, 'kwargs'))
 
     @property
     def callable_name(self):
