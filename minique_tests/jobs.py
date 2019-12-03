@@ -9,10 +9,10 @@ def sum_positive_values(a, b):
     return a + b
 
 
-def job_with_unjsonable_retval():
+def job_with_unjsonable_retval() -> datetime.datetime:
     return datetime.datetime.now()
 
 
-def reverse_job_id():
+def reverse_job_id() -> str:
     # tests that one can access the current job object
     return get_current_job().id[::-1]

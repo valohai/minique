@@ -1,5 +1,8 @@
 import json
 import time
+from typing import Callable, Optional, Union
+
+from redis import Redis
 
 from minique.enums import JobStatus
 from minique.excs import DuplicateJob
@@ -8,7 +11,15 @@ from minique.models.queue import Queue
 from minique.utils import get_random_pronounceable_string
 
 
-def enqueue(redis, queue_name, callable, kwargs=None, job_id=None, job_ttl=0, result_ttl=86400 * 7):
+def enqueue(
+    redis: Redis,
+    queue_name: str,
+    callable: Union[Callable, str],
+    kwargs: Optional[dict] = None,
+    job_id: Optional[str] = None,
+    job_ttl: int = 0,
+    result_ttl: int = 86400 * 7
+) -> Job:
     if not isinstance(callable, str):
         callable = '{module}.{qualname}'.format(
             module=callable.__module__,
@@ -40,20 +51,20 @@ def enqueue(redis, queue_name, callable, kwargs=None, job_id=None, job_ttl=0, re
     return job
 
 
-def get_job(redis, job_id):
+def get_job(redis: Redis, job_id: str) -> Job:
     job = Job(redis, job_id)
     job.ensure_exists()
     return job
 
 
-def cancel_job(redis, job_id):
+def cancel_job(redis: Redis, job_id: str) -> bool:
     """
     Cancel the job with the given job ID.
 
     If a worker is already busy with the job, it may not immediately quit,
     and as such, the job is not set to cancelled state.
 
-    :type redis: redis.StrictRedis
+    :type redis: redis.Redis
     :param job_id: Job ID.
     :raises minique.excs.NoSuchJob: if the job does not exist.
     """

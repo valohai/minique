@@ -1,4 +1,5 @@
 import pytest
+from redis import Redis
 
 from minique.api import enqueue
 from minique.work.job_runner import JobRunner
@@ -6,7 +7,7 @@ from minique.work.worker import Worker
 
 
 class HonkJobRunner(JobRunner):
-    def acquire(self):
+    def acquire(self) -> None:
         print('Hooooooooonk.')
 
     def process_exception(self, excinfo):
@@ -18,7 +19,12 @@ class HonkWorker(Worker):
 
 
 @pytest.mark.parametrize('problem', (False, True))
-def test_job_runner_override(redis, random_queue_name, capsys, problem):
+def test_job_runner_override(
+    redis: Redis,
+    random_queue_name: str,
+    capsys,
+    problem: bool
+):
     args = ({'a': 'err', 'b': -8} if problem else {'a': 10, 'b': 15})
     job = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values', args)
     assert not job.has_finished
