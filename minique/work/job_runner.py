@@ -23,7 +23,7 @@ class JobRunner:
         job.ensure_exists()
 
     def acquire(self):
-        new_acquisition_info = json.dumps({'worker': self.worker.id, 'time': time.time()})
+        new_acquisition_info = json.dumps(self.get_acquisition_info())
         if not self.redis.hsetnx(self.job.redis_key, 'acquired', new_acquisition_info):
             raise AlreadyAcquired('job {id} already acquired: {info}'.format(
                 id=self.job.id,
@@ -31,6 +31,10 @@ class JobRunner:
             ))
         self.redis.hset(self.job.redis_key, 'status', JobStatus.ACQUIRED.value)
         self.redis.persist(self.job.redis_key)
+
+    def get_acquisition_info(self):
+        # Override me in a subclass if you like!
+        return {'worker': self.worker.id, 'time': time.time()}
 
     def execute(self):
         func = self.get_callable()
