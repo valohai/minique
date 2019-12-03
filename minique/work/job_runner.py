@@ -80,7 +80,7 @@ class JobRunner:
             interrupt = isinstance(exc, KeyboardInterrupt)
             try:
                 self.process_exception(excinfo)
-            except:  # noqa
+            except Exception:  # noqa
                 self.log.warning('error running process_exception()', exc_info=True)
         finally:
             end_time = time.time()
