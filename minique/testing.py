@@ -1,3 +1,4 @@
+from minique.models.job import Job
 from minique.utils import _set_current_job, import_by_string
 from minique.work.job_runner import JobRunner
 from minique.work.worker import Worker
@@ -14,7 +15,11 @@ class TestJobRunner(JobRunner):
             return func(**kwargs)
 
 
-def run_synchronously(job, replacement_callable=None, replacement_kwargs=None):
+def run_synchronously(
+    job: Job,
+    replacement_callable: None = None,
+    replacement_kwargs: None = None
+) -> None:
     job.replacement_callable = replacement_callable
     job.replacement_kwargs = replacement_kwargs
     worker = Worker(job.redis, [])

@@ -3,26 +3,30 @@ import logging
 import sys
 import time
 import traceback
+from typing import Callable
 
-from redis import StrictRedis
+from redis import Redis
 
+from minique._compat import TYPE_CHECKING
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted
 from minique.models.job import Job
 from minique.utils import _set_current_job, import_by_string
 
+if TYPE_CHECKING:
+    from minique.work.worker import Worker
+
 
 class JobRunner:
-    def __init__(self, worker, job):
-        assert isinstance(job, Job)
+    def __init__(self, worker: 'Worker', job: Job) -> None:
         self.worker = worker
         self.job = job
         self.redis = job.redis
-        assert isinstance(self.redis, StrictRedis)
+        assert isinstance(self.redis, Redis)
         self.log = logging.getLogger('{}.{}'.format(__name__, str(self.job.id).replace('.', '_')))
         job.ensure_exists()
 
-    def acquire(self):
+    def acquire(self) -> None:
         new_acquisition_info = json.dumps(self.get_acquisition_info())
         if not self.redis.hsetnx(self.job.redis_key, 'acquired', new_acquisition_info):
             raise AlreadyAcquired('job {id} already acquired: {info}'.format(
@@ -32,7 +36,7 @@ class JobRunner:
         self.redis.hset(self.job.redis_key, 'status', JobStatus.ACQUIRED.value)
         self.redis.persist(self.job.redis_key)
 
-    def get_acquisition_info(self):
+    def get_acquisition_info(self) -> dict:
         # Override me in a subclass if you like!
         return {'worker': self.worker.id, 'time': time.time()}
 
@@ -43,10 +47,10 @@ class JobRunner:
         with _set_current_job(job=self.job):
             return func(**kwargs)
 
-    def get_callable(self):
+    def get_callable(self) -> Callable:
         return import_by_string(self.job.callable_name)
 
-    def complete(self, success, value, duration):
+    def complete(self, success: bool, value: str, duration: float) -> None:
         assert isinstance(success, bool)
         update_payload = {
             'status': (JobStatus.SUCCESS if success else JobStatus.FAILED).value,
@@ -63,7 +67,7 @@ class JobRunner:
         else:
             self.log.warning('errored in %f seconds', duration)
 
-    def run(self):
+    def run(self) -> None:
         self.acquire()
         interrupt = False
         success = False

@@ -1,6 +1,7 @@
 import pytest
+from redis.client import Redis
 
-from minique.api import enqueue, get_job, cancel_job
+from minique.api import cancel_job, enqueue, get_job
 from minique.enums import JobStatus
 from minique.models.queue import Queue
 from minique.testing import run_synchronously
@@ -9,7 +10,7 @@ from minique_tests.jobs import reverse_job_id
 
 
 @pytest.mark.parametrize('success', (False, True))
-def test_basics(redis, success, random_queue_name):
+def test_basics(redis: Redis, success: bool, random_queue_name: str) -> None:
     kwargs = {'a': 10, 'b': (15 if success else 0)}
     job = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values', kwargs)
     assert not job.has_finished
@@ -28,18 +29,18 @@ def test_basics(redis, success, random_queue_name):
             assert job.status == JobStatus.FAILED
 
 
-def test_worker_empty_queue(redis, random_queue_name):
+def test_worker_empty_queue(redis: Redis, random_queue_name: str) -> None:
     worker = Worker.for_queue_names(redis, random_queue_name)
     assert not worker.tick()
 
 
-def test_job_object_access(redis, random_queue_name):
+def test_job_object_access(redis: Redis, random_queue_name: str) -> None:
     job = enqueue(redis, random_queue_name, reverse_job_id)
     run_synchronously(job)
     assert job.result == job.id[::-1]
 
 
-def test_cancel(redis, random_queue_name):
+def test_cancel(redis: Redis, random_queue_name: str) -> None:
     job = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values')
     assert Queue(redis, random_queue_name).length == 1
     cancel_job(redis, job.id)
