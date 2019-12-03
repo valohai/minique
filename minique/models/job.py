@@ -7,10 +7,9 @@ from minique.utils import get_json_or_none
 
 
 class Job:
-    def __init__(self, redis: StrictRedis, id):
+    def __init__(self, redis: StrictRedis, id: str):
         self.redis = redis
-        assert isinstance(id, str)
-        self.id = id
+        self.id = str(id)
 
     def ensure_exists(self):
         if not self.exists:

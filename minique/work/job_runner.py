@@ -19,7 +19,7 @@ class JobRunner:
         self.job = job
         self.redis = job.redis
         assert isinstance(self.redis, StrictRedis)
-        self.log = logging.getLogger('{}.{}'.format(__name__, self.job.id.replace('.', '_')))
+        self.log = logging.getLogger('{}.{}'.format(__name__, str(self.job.id).replace('.', '_')))
         job.ensure_exists()
 
     def acquire(self):
