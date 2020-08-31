@@ -1,11 +1,11 @@
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 from redis import Redis
 
 from minique._compat import TYPE_CHECKING
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
 from minique.enums import JobStatus
-from minique.excs import NoSuchJob
+from minique.excs import NoSuchJob, AlreadyAcquired, AlreadyResulted, InvalidStatus
 from minique.utils import get_json_or_none
 
 if TYPE_CHECKING:
@@ -20,6 +20,19 @@ class Job:
     def ensure_exists(self) -> None:
         if not self.exists:
             raise NoSuchJob('Job {id} does not exist'.format(id=self.id))
+
+    def ensure_enqueued(self) -> Tuple[bool, int]:
+        """
+        Ensure the job is indeed in its queue. See the docs for Queue.ensure_enqueued() for more information.
+        """
+        if self.has_started:
+            raise AlreadyAcquired('Job {id} has already been started, will not enqueue'.format(id=self.id))
+        if self.has_finished:
+            raise AlreadyResulted('Job {id} has already been finished, will not enqueue'.format(id=self.id))
+        status = self.status
+        if status in (JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.CANCELLED):
+            raise InvalidStatus('Job {id} has status {status}, will not enqueue'.format(id=self.id, status=status))
+        return self.get_queue().ensure_enqueued(self)
 
     @property
     def redis_key(self) -> str:

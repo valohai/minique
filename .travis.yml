@@ -1,4 +1,5 @@
-sudo: false
+dist: xenial
+os: linux
 language: python
 python:
   - "3.5"
@@ -6,7 +7,7 @@ python:
   - "3.7"
   - "3.8"
 services:
-  - redis-server
+  - redis
 install:
   - "pip install -e .[dev]"
 env:

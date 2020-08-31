@@ -41,12 +41,7 @@ def enqueue(
         'result_ttl': int(result_ttl),
     }
     queue = Queue(redis, name=queue_name)
-    with redis.pipeline() as p:
-        p.hmset(job.redis_key, payload)
-        if payload['job_ttl'] > 0:
-            p.expire(job.redis_key, payload['job_ttl'])
-        p.rpush(queue.redis_key, job.id)
-        p.execute()
+    queue.enqueue_initial(job=job, payload=payload)
     job.ensure_exists()
     return job
 
