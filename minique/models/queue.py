@@ -22,6 +22,12 @@ class Queue:
     def length(self) -> int:
         return self.redis.llen(self.redis_key)
 
+    def clear(self):
+        """
+        Entirely clear this queue. Do not call this unless you're willing to risk orphaned jobs.
+        """
+        return self.redis.delete(self.redis_key)
+
     def enqueue_initial(self, job: 'Job', payload: dict):
         assert payload['queue'] == self.name
         with self.redis.pipeline() as p:
