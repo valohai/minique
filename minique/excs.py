@@ -6,9 +6,13 @@ class DuplicateJob(Exception):
     pass
 
 
-class AlreadyAcquired(Exception):
+class InvalidStatus(Exception):
     pass
 
 
-class AlreadyResulted(Exception):
+class AlreadyAcquired(InvalidStatus):
+    pass
+
+
+class AlreadyResulted(InvalidStatus):
     pass
