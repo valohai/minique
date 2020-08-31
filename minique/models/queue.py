@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from redis import Redis
 
 from minique.consts import QUEUE_KEY_PREFIX
 from minique.utils import cached_property
+
+if TYPE_CHECKING:
+    from minique.models.job import Job
 
 
 class Queue:
@@ -16,3 +21,12 @@ class Queue:
     @property
     def length(self) -> int:
         return self.redis.llen(self.redis_key)
+
+    def enqueue_initial(self, job: 'Job', payload: dict):
+        assert payload['queue'] == self.name
+        with self.redis.pipeline() as p:
+            p.hmset(job.redis_key, payload)
+            if payload['job_ttl'] > 0:
+                p.expire(job.redis_key, payload['job_ttl'])
+            p.rpush(self.redis_key, job.id)
+            p.execute()
