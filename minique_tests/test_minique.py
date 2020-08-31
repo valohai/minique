@@ -46,3 +46,23 @@ def test_cancel(redis: Redis, random_queue_name: str) -> None:
     cancel_job(redis, job.id)
     assert Queue(redis, random_queue_name).length == 0  # Canceling does remove the job from the queue
     worker = Worker.for_queue_names(redis, random_queue_name).tick()
+
+
+def test_ensure_enqueued(redis: Redis, random_queue_name: str) -> None:
+    j1 = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values')
+    j2 = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values')
+    queue = j1.get_queue()
+    assert queue.length == 2
+    assert j1.ensure_enqueued() == (False, 0)  # Did not need to re-enqueue
+    assert j2.ensure_enqueued() == (False, 1)  # Did not need to re-enqueue
+    assert redis.lpop(queue.redis_key) == j1.id.encode()  # pop first item, must be the first job
+    assert queue.length == 1
+    assert j1.ensure_enqueued() == (True, 1)  # Did re-enqueue in last position
+    assert j2.ensure_enqueued() == (False, 0)  # Did not need to re-enqueue
+    Worker.for_queue_names(redis, queue.name).tick()
+    assert queue.length == 1
+    Worker.for_queue_names(redis, queue.name).tick()
+    assert queue.length == 0
+    for job in (j1, j2):
+        with pytest.raises(Exception):  # Refuses to be enqueued after completion
+            job.ensure_enqueued()
