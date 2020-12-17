@@ -1,4 +1,4 @@
-name: Build
+name: CI
 'on':
   push:
     branches:
@@ -7,7 +7,7 @@ name: Build
     branches:
       - master
 jobs:
-  Build:
+  Test:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -23,13 +23,26 @@ jobs:
           - 6379:6379
     env:
       REDIS_URL: 'redis://localhost:6379/0'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - name: 'Set up Python ${{ matrix.python-version }}'
         uses: actions/setup-python@v2
         with:
           python-version: '${{ matrix.python-version }}'
       - uses: actions/checkout@v2
-      - run: 'pip install -e .[dev]'
-      - run: flake8 minique
+      - run: 'pip install -e . -r requirements/requirements-test.txt'
       - run: py.test -vvv --cov .
       - run: 'bash <(curl -s https://codecov.io/bash)'
+  Lint:
+    runs-on: ubuntu-20.04
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - name: 'Set up Python'
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - uses: actions/checkout@v2
+      - run: 'pip install -r requirements/requirements-lint.txt'
+      - run: black --check .
+      - run: flake8 minique
