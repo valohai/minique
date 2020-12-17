@@ -49,7 +49,7 @@ def test_cancel(redis: Redis, random_queue_name: str) -> None:
     assert (
         Queue(redis, random_queue_name).length == 0
     )  # Canceling does remove the job from the queue
-    worker = Worker.for_queue_names(redis, random_queue_name).tick()
+    Worker.for_queue_names(redis, random_queue_name).tick()
 
 
 def test_ensure_enqueued(redis: Redis, random_queue_name: str) -> None:

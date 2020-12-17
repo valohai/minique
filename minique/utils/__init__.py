@@ -23,11 +23,11 @@ def import_by_string(callable: str) -> Callable:
 @contextmanager
 def _set_current_job(job: "Job"):
     assert not get_current_job()
-    setattr(_current_jobs, "current_job", job)
+    _current_jobs.current_job = job
     try:
         yield
     finally:
-        setattr(_current_jobs, "current_job", None)
+        _current_jobs.current_job = None
 
 
 def get_current_job() -> Optional["Job"]:
@@ -43,7 +43,7 @@ class cached_property(object):
     """
 
     def __init__(self, func: Callable) -> None:
-        self.__doc__ = getattr(func, "__doc__")
+        self.__doc__ = getattr(func, "__doc__", "")
         self.func = func
 
     def __get__(self, obj: Any, cls: Any) -> str:
