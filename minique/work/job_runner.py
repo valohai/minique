@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import logging
 import sys
@@ -9,7 +10,7 @@ from redis import Redis
 
 from minique._compat import TYPE_CHECKING
 from minique.enums import JobStatus
-from minique.excs import AlreadyAcquired, AlreadyResulted
+from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidJob
 from minique.models.job import Job
 from minique.utils import _set_current_job, import_by_string
 
@@ -51,8 +52,23 @@ class JobRunner:
         with _set_current_job(job=self.job):
             return func(**kwargs)
 
+    def verify_callable_name(self, name: str) -> bool:
+        if not any(
+            fnmatch.fnmatch(name, pat) for pat in self.worker.allowed_callable_patterns
+        ):
+            raise InvalidJob(
+                "Name {} doesn't match any pattern in {}".format(
+                    name,
+                    self.worker.allowed_callable_patterns,
+                )
+            )
+        return True
+
     def get_callable(self) -> Callable:
-        return import_by_string(self.job.callable_name)
+        name = self.job.callable_name
+        if not self.verify_callable_name(name):
+            raise InvalidJob("Invalid job definition")
+        return import_by_string(name)
 
     def complete(self, success: bool, value: str, duration: float) -> None:
         assert isinstance(success, bool)

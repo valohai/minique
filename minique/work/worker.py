@@ -15,6 +15,9 @@ class Worker:
     queue_timeout = 1
     job_runner_class = JobRunner
 
+    # This property may be ignored by subclasses, but it's here for convenience's sake.
+    allowed_callable_patterns = frozenset()
+
     def __init__(self, redis: Redis, queues: List[Queue]) -> None:
         self.id = self.compute_id()
         self.redis = redis

@@ -39,9 +39,12 @@ job = get_job(redis, job_id)
 ### Worker(s)
 
 * Ensure your workers are able to import the functions you wish to run.
+* Set the callables the worker will allow with `--allow-callable`.
+  * Alternately, you may wish to subclass `minique.work.job_runner.JobRunner`
+    to specify an entirely different lookup mechanism.
 
 ```bash
-$ minique -u redis://localhost:6379/4 -q work -q anotherqueue -q thirdqueue
+$ minique -u redis://localhost:6379/4 -q work -q anotherqueue -q thirdqueue --allow-callable 'my_jobs.*'
 ```
 
 Todo
