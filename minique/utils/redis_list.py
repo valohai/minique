@@ -4,11 +4,7 @@ from redis import Redis
 
 
 def read_list(
-    redis_conn: Redis,
-    key: str,
-    *,
-    chunk_size: int = 4096,
-    last_n: Optional[int] = None
+    redis_conn: Redis, key: str, *, chunk_size: int = 4096, last_n: Optional[int] = None
 ) -> Iterable[bytes]:
     """
     Read a possibly large Redis list in chunks.
@@ -36,7 +32,7 @@ def read_list(
         # Regarding that - 1 there, see this from https://redis.io/commands/lrange:
         # > Note that if you have a list of numbers from 0 to 100, LRANGE list 0 10
         # > will return 11 elements, that is, the rightmost item is included.
-        chunk = (redis_conn.lrange(key, offset, offset + chunk_size - 1) or [])
+        chunk = redis_conn.lrange(key, offset, offset + chunk_size - 1) or []
         if not chunk:
             break
         yield from chunk

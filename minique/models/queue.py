@@ -18,7 +18,7 @@ class Queue:
 
     @cached_property
     def redis_key(self):
-        return '%s%s' % (QUEUE_KEY_PREFIX, self.name)
+        return "%s%s" % (QUEUE_KEY_PREFIX, self.name)
 
     @property
     def length(self) -> int:
@@ -30,23 +30,23 @@ class Queue:
         """
         return self.redis.delete(self.redis_key)
 
-    def enqueue_initial(self, job: 'Job', payload: dict):
-        assert payload['queue'] == self.name
+    def enqueue_initial(self, job: "Job", payload: dict):
+        assert payload["queue"] == self.name
         with self.redis.pipeline() as p:
             p.hmset(job.redis_key, payload)
-            if payload['job_ttl'] > 0:
-                p.expire(job.redis_key, payload['job_ttl'])
+            if payload["job_ttl"] > 0:
+                p.expire(job.redis_key, payload["job_ttl"])
             p.rpush(self.redis_key, job.id)
             p.execute()
 
-    def get_queue_index(self, job: 'Job') -> Optional[int]:
+    def get_queue_index(self, job: "Job") -> Optional[int]:
         job_id_bytes = str(job.id).encode()
         for index, value in enumerate(read_list(self.redis, self.redis_key)):
             if value == job_id_bytes:
                 return index
         return None
 
-    def ensure_enqueued(self, job: 'Job') -> Tuple[bool, int]:
+    def ensure_enqueued(self, job: "Job") -> Tuple[bool, int]:
         """
         Ensure the job is in the queue.
 
@@ -57,7 +57,9 @@ class Queue:
                  the boolean is true if the job was indeed re-queued
         """
         if not self.redis.exists(job.redis_key):
-            raise NoSuchJob('Job object for {id} has disappeared, can not re-enqueue'.format(id=id))
+            raise NoSuchJob(
+                "Job object for {id} has disappeared, can not re-enqueue".format(id=id)
+            )
 
         # NB: This is mildly racy; two processes could be doing this scan concurrently.
         #     Technically having an entry in the queue multiple times shouldn't be a problem, since
