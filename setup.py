@@ -9,14 +9,6 @@ def get_version(package):
     return re.search("__version__ = '(.+?)'", init_py).group(1)
 
 
-dev_dependencies = [
-    'flake8',
-    'isort',
-    'pydocstyle',
-    'pytest>=4.3.0',
-    'pytest-cov',
-]
-
 if __name__ == '__main__':
     setuptools.setup(
         name='minique',
@@ -29,8 +21,6 @@ if __name__ == '__main__':
         maintainer_email='akx@iki.fi',
         license='MIT',
         install_requires=['redis>=2.10.0'],
-        tests_require=dev_dependencies,
-        extras_require={'dev': dev_dependencies},
         packages=setuptools.find_packages('.', exclude=('minique_tests',)),
         include_package_data=True,
         entry_points={
