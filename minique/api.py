@@ -18,10 +18,10 @@ def enqueue(
     kwargs: Optional[dict] = None,
     job_id: Optional[str] = None,
     job_ttl: int = 0,
-    result_ttl: int = 86400 * 7
+    result_ttl: int = 86400 * 7,
 ) -> Job:
     if not isinstance(callable, str):
-        callable = '{module}.{qualname}'.format(
+        callable = "{module}.{qualname}".format(
             module=callable.__module__,
             qualname=callable.__qualname__,
         )
@@ -30,15 +30,15 @@ def enqueue(
         job_id = get_random_pronounceable_string()
     job = Job(redis, job_id)
     if job.exists:
-        raise DuplicateJob('duplicate job: {id}'.format(id=job_id))
+        raise DuplicateJob("duplicate job: {id}".format(id=job_id))
     payload = {
-        'queue': queue_name,
-        'callable': str(callable),
-        'kwargs': json.dumps(kwargs or {}),
-        'status': JobStatus.NONE.value,
-        'ctime': time.time(),
-        'job_ttl': int(job_ttl),
-        'result_ttl': int(result_ttl),
+        "queue": queue_name,
+        "callable": str(callable),
+        "kwargs": json.dumps(kwargs or {}),
+        "status": JobStatus.NONE.value,
+        "ctime": time.time(),
+        "job_ttl": int(job_ttl),
+        "result_ttl": int(result_ttl),
     }
     queue = Queue(redis, name=queue_name)
     queue.enqueue_initial(job=job, payload=payload)
@@ -66,7 +66,7 @@ def cancel_job(redis: Redis, job_id: str) -> bool:
     job = get_job(redis, job_id)
     if not (job.has_finished or job.has_started):
         # Cancel the job and remove it from the queue it may be in.
-        redis.hset(job.redis_key, 'status', JobStatus.CANCELLED.value)
+        redis.hset(job.redis_key, "status", JobStatus.CANCELLED.value)
         redis.lrem(job.get_queue().redis_key, 0, job.id)
         return True
     return False

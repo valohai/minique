@@ -5,7 +5,7 @@ from minique.utils import get_current_job
 
 def sum_positive_values(a, b):
     if not (a > 0 and b > 0):
-        raise ValueError('values not positive enough')
+        raise ValueError("values not positive enough")
     return a + b
 
 

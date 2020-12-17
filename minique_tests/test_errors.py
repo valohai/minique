@@ -15,12 +15,14 @@ def test_unjsonable_retval(redis: Redis, random_queue_name: str):
     job = enqueue(redis, random_queue_name, job_with_unjsonable_retval)
     Worker.for_queue_names(redis, random_queue_name).tick()
     assert job.status == JobStatus.FAILED
-    assert job.result['exception_type'] == 'TypeError'
-    assert 'not JSON serializable' in job.result['exception_value']
+    assert job.result["exception_type"] == "TypeError"
+    assert "not JSON serializable" in job.result["exception_value"]
 
 
 def test_disappeared_job(redis: Redis, random_queue_name: str):
-    enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values', job_ttl=1)
+    enqueue(
+        redis, random_queue_name, "minique_tests.jobs.sum_positive_values", job_ttl=1
+    )
     assert Queue(redis, random_queue_name).length == 1
     time.sleep(2)
     worker = Worker.for_queue_names(redis, random_queue_name)
@@ -29,7 +31,7 @@ def test_disappeared_job(redis: Redis, random_queue_name: str):
 
 
 def test_rerun_done_job(redis: Redis, random_queue_name: str):
-    job = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values')
+    job = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     worker = Worker.for_queue_names(redis, random_queue_name)
     worker.tick()
     assert job.has_finished
@@ -42,6 +44,11 @@ def test_rerun_done_job(redis: Redis, random_queue_name: str):
 
 
 def test_duplicate_names(redis: Redis, random_queue_name: str):
-    job = enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values')
+    job = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     with pytest.raises(DuplicateJob):
-        enqueue(redis, random_queue_name, 'minique_tests.jobs.sum_positive_values', job_id=job.id)
+        enqueue(
+            redis,
+            random_queue_name,
+            "minique_tests.jobs.sum_positive_values",
+            job_id=job.id,
+        )
