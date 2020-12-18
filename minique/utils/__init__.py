@@ -5,7 +5,7 @@ from importlib import import_module
 from threading import local
 from typing import Any, Callable, Optional
 
-from minique._compat import TYPE_CHECKING
+from minique.compat import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from minique.models.job import Job

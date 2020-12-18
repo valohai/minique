@@ -8,7 +8,7 @@ from typing import Callable
 
 from redis import Redis
 
-from minique._compat import TYPE_CHECKING
+from minique.compat import TYPE_CHECKING
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidJob
 from minique.models.job import Job
