@@ -2,7 +2,7 @@ from typing import Any, Optional, Tuple
 
 from redis import Redis
 
-from minique._compat import TYPE_CHECKING
+from minique.compat import TYPE_CHECKING
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
 from minique.enums import JobStatus
 from minique.excs import NoSuchJob, AlreadyAcquired, AlreadyResulted, InvalidStatus
