@@ -88,7 +88,11 @@ class JobRunner:
             self.log.warning("errored in %f seconds", duration)
 
     def run(self) -> None:
-        self.acquire()
+        try:
+            self.acquire()
+        except Exception as exc:
+            self.process_exception(sys.exc_info())
+            raise exc  # could have had an exception in process_exception
         interrupt = False
         success = False
         value = {"error": "unknown"}
@@ -109,10 +113,7 @@ class JobRunner:
                 default=str,
             )
             interrupt = isinstance(exc, KeyboardInterrupt)
-            try:
-                self.process_exception(excinfo)
-            except Exception:  # noqa
-                self.log.warning("error running process_exception()", exc_info=True)
+            self.process_exception(excinfo)
         finally:
             end_time = time.time()
             self.complete(
@@ -121,10 +122,14 @@ class JobRunner:
         if interrupt:  # pragma: no cover
             raise KeyboardInterrupt("Interrupt")
 
-    def process_exception(self, excinfo):  # pragma: no cover
-        """
-        A hook for subclasses to log (e.g. Sentry) or otherwise process exceptions.
-
-        :param excinfo: The sys.exc_info() 3-tuple
-        """
-        pass
+    def process_exception(self, excinfo):
+        try:
+            self.worker.process_exception(
+                excinfo,
+                context={
+                    "id": str(self.job.id),
+                    "queue": str(self.job.queue_name),
+                },
+            )
+        except Exception:  # noqa
+            self.log.warning("error running process_exception()", exc_info=True)
