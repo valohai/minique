@@ -24,7 +24,7 @@ def read_list(
         chunk_size = 4096
 
     if last_n and last_n > 0:
-        offset = redis_conn.llen(key) - last_n
+        offset = max(0, redis_conn.llen(key) - last_n)
     else:
         offset = 0
 
