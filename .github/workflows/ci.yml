@@ -46,3 +46,4 @@ jobs:
       - run: 'pip install -r requirements/requirements-lint.txt'
       - run: black --check .
       - run: flake8 minique
+      - run: bandit -r . -s B101,B311

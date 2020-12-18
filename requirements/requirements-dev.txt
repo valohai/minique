@@ -8,7 +8,7 @@
 -r requirements-lint.txt
 -r requirements-test.txt
 pip-compile-multi==2.1.0  # via -r requirements/requirements-dev.in
-toposort==1.5             # via pip-compile-multi
+toposort==1.6             # via pip-compile-multi
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
