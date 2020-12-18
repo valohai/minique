@@ -1,3 +1,4 @@
+import sys
 import time
 
 import pytest
@@ -11,12 +12,25 @@ from minique_tests.jobs import job_with_unjsonable_retval
 from minique_tests.worker import TestWorker
 
 
-def test_unjsonable_retval(redis: Redis, random_queue_name: str):
+def check_sentry_event_calls(sentry_event_calls, num_expected: int):
+    # Check that an error got recorded, if Sentry is enabled
+    if sentry_event_calls is not None:
+        assert len(sentry_event_calls) == num_expected
+        # TODO: for some reason this check flakes on Python 3.5:
+        #       TypeError: string indices must be integers
+        if sys.version_info >= (3, 6):
+            assert any(  # pragma: no cover
+                call.args[0]["level"] == "error" for call in sentry_event_calls
+            )
+
+
+def test_unjsonable_retval(redis: Redis, random_queue_name: str, sentry_event_calls):
     job = enqueue(redis, random_queue_name, job_with_unjsonable_retval)
     TestWorker.for_queue_names(redis, random_queue_name).tick()
     assert job.status == JobStatus.FAILED
     assert job.result["exception_type"] == "TypeError"
     assert "not JSON serializable" in job.result["exception_value"]
+    check_sentry_event_calls(sentry_event_calls, 1)
 
 
 def test_disappeared_job(redis: Redis, random_queue_name: str):
@@ -30,7 +44,7 @@ def test_disappeared_job(redis: Redis, random_queue_name: str):
         worker.tick()
 
 
-def test_rerun_done_job(redis: Redis, random_queue_name: str):
+def test_rerun_done_job(redis: Redis, random_queue_name: str, sentry_event_calls):
     job = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     worker = TestWorker.for_queue_names(redis, random_queue_name)
     worker.tick()
@@ -41,6 +55,7 @@ def test_rerun_done_job(redis: Redis, random_queue_name: str):
     redis.rpush(queue.redis_key, job.id)
     with pytest.raises(AlreadyAcquired):
         worker.tick()
+    check_sentry_event_calls(sentry_event_calls, 2)
 
 
 def test_duplicate_names(redis: Redis, random_queue_name: str):
@@ -54,10 +69,13 @@ def test_duplicate_names(redis: Redis, random_queue_name: str):
         )
 
 
-def test_invalid_callable_name(redis: Redis, random_queue_name: str):
+def test_invalid_callable_name(
+    redis: Redis, random_queue_name: str, sentry_event_calls
+):
     job = enqueue(redis, random_queue_name, "os.system", {"command": "evil"})
     worker = TestWorker.for_queue_names(redis, random_queue_name)
     worker.tick()
     assert job.has_finished
     assert job.status == JobStatus.FAILED
     assert job.result["exception_type"] == "InvalidJob"
+    check_sentry_event_calls(sentry_event_calls, 1)

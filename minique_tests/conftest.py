@@ -1,9 +1,12 @@
 import logging
 import os
+from typing import Optional
+from unittest.mock import Mock
 
 import pytest
 from redis import Redis
 
+from minique.compat import sentry_sdk
 from minique.utils import get_random_pronounceable_string
 
 
@@ -27,3 +30,14 @@ def redis(redis_url) -> Redis:
 @pytest.fixture()
 def random_queue_name() -> str:
     return "test_queue_%s" % get_random_pronounceable_string()
+
+
+@pytest.fixture
+def sentry_event_calls(monkeypatch) -> Optional[list]:
+    if not sentry_sdk:
+        return None
+    client = sentry_sdk.Client(dsn="http://a:a@example.com/123")
+    client.capture_event = Mock()
+    # TODO: this doesn't clean up the hub – maybe we don't need to?
+    sentry_sdk.Hub.current.bind_client(client)
+    return client.capture_event.call_args_list
