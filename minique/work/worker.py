@@ -5,6 +5,7 @@ from typing import List, Optional, Union
 
 from redis import Redis
 
+from minique.compat import sentry_sdk
 from minique.enums import JobStatus
 from minique.models.job import Job
 from minique.models.queue import Queue
@@ -65,3 +66,19 @@ class Worker:
                 break
             except Exception:  # noqa
                 self.log.error("Unexpected worker tick error", exc_info=True)
+
+    def process_exception(
+        self, excinfo: Optional[tuple] = None, context: Optional[dict] = None
+    ):  # pragma: no cover
+        """
+        A hook to log or process exceptions.
+
+        If sentry_sdk is installed, this implementation will automatically be use it.
+
+        :param excinfo: Optionally, the sys.exc_info() 3-tuple
+        """
+        if sentry_sdk:
+            with sentry_sdk.push_scope() as scope:
+                if context:
+                    scope.set_context("minique", context)
+                sentry_sdk.capture_exception(excinfo)

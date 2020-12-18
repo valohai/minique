@@ -47,7 +47,22 @@ job = get_job(redis, job_id)
 $ minique -u redis://localhost:6379/4 -q work -q anotherqueue -q thirdqueue --allow-callable 'my_jobs.*'
 ```
 
-Todo
-----
+Sentry Support
+--------------
 
-* Sentry support
+Minique automatically integrates with the [Sentry](https://sentry.io/welcome/)
+exception tracking service.
+
+You can use the `[sentry]` [installation extra][extras] to install `sentry-sdk` along with Minique,
+or you can do it manually.
+
+Simply set the `SENTRY_DSN` environment variable; if all goes well,
+you should see a "Sentry configured with a valid DSN" message at CLI boot.
+
+The [other environment-configurable options](https://docs.sentry.io/platforms/python/configuration/options/)
+also work as you would expect.
+
+Exceptions occurring during job execution will be sent to Sentry and annotated with `minique` context
+describing the job ID and queue name.
+
+[extras]: https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras
