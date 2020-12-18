@@ -3,7 +3,7 @@ from redis import Redis
 
 from minique.api import enqueue
 from minique.work.job_runner import JobRunner
-from minique.work.worker import Worker
+from minique_tests.worker import TestWorker
 
 
 class HonkJobRunner(JobRunner):
@@ -14,7 +14,7 @@ class HonkJobRunner(JobRunner):
         print("Alarmed honk! {}".format(excinfo))
 
 
-class HonkWorker(Worker):
+class HonkWorker(TestWorker):
     job_runner_class = HonkJobRunner
 
 

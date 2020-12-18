@@ -16,3 +16,7 @@ class AlreadyAcquired(InvalidStatus):
 
 class AlreadyResulted(InvalidStatus):
     pass
+
+
+class InvalidJob(ValueError):
+    pass

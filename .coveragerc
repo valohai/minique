@@ -3,7 +3,6 @@ branch = True
 omit =
     *site-packages*
     setup.py
-    minique/cli.py
 
 [report]
 exclude_lines =

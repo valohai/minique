@@ -11,11 +11,16 @@ def pytest_configure() -> None:
     logging.basicConfig(datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
 
 
-@pytest.fixture()
-def redis() -> Redis:
-    redis_url = os.environ.get("REDIS_URL")
-    if not redis_url:  # pragma: no cover
+@pytest.fixture(scope="session")
+def redis_url() -> str:
+    url = os.environ.get("REDIS_URL")
+    if not url:  # pragma: no cover
         pytest.skip("no REDIS_URL (required for redis fixture)")
+    return url
+
+
+@pytest.fixture()
+def redis(redis_url) -> Redis:
     return Redis.from_url(redis_url)
 
 
