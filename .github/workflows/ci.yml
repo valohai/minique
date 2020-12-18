@@ -13,9 +13,13 @@ jobs:
       matrix:
         include:
           - python-version: '3.5'
+          - python-version: '3.5'
+            install-extra: '[sentry]'
           - python-version: '3.6'
           - python-version: '3.7'
           - python-version: '3.8'
+          - python-version: '3.8'
+            install-extra: '[sentry]'
     services:
       redis:
         image: redis
@@ -23,6 +27,7 @@ jobs:
           - 6379:6379
     env:
       REDIS_URL: 'redis://localhost:6379/0'
+      SENTRY_DSN: 'http://user:pass@localhost:12340/foo'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - name: 'Set up Python ${{ matrix.python-version }}'
@@ -30,7 +35,9 @@ jobs:
         with:
           python-version: '${{ matrix.python-version }}'
       - uses: actions/checkout@v2
-      - run: 'pip install -e . -r requirements/requirements-test.txt'
+      - run: 'pip install -e ".$EXTRA" -r requirements/requirements-test.txt'
+        env:
+          EXTRA: '${{ matrix.install-extra }}'
       - run: py.test -vvv --cov .
       - run: 'bash <(curl -s https://codecov.io/bash)'
   Lint:
