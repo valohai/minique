@@ -1,12 +1,13 @@
+import json
 from typing import Any, Optional, Tuple
 
 from redis import Redis
 
+from minique import encoding
 from minique.compat import TYPE_CHECKING
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
 from minique.enums import JobStatus
 from minique.excs import NoSuchJob, AlreadyAcquired, AlreadyResulted, InvalidStatus
-from minique.utils import get_json_or_none
 
 if TYPE_CHECKING:
     from minique.models.queue import Queue
@@ -53,8 +54,12 @@ class Job:
         return "%s%s" % (RESULT_KEY_PREFIX, self.id)
 
     @property
-    def acquisition_info(self) -> dict:
-        return get_json_or_none(self.redis.hget(self.redis_key, "acquired"))
+    def acquisition_info(self) -> Optional[dict]:
+        # Acquisition info is always stored as JSON, not with the `encoding`
+        acquisition_json = self.redis.hget(self.redis_key, "acquired")
+        if acquisition_json:
+            return json.loads(acquisition_json.decode())
+        return None
 
     @property
     def has_finished(self) -> int:
@@ -65,8 +70,15 @@ class Job:
         return self.redis.hexists(self.redis_key, "acquired")
 
     @property
+    def encoded_result(self) -> Optional[bytes]:
+        return self.redis.get(self.result_redis_key)
+
+    @property
     def result(self) -> Optional[Any]:
-        return get_json_or_none(self.redis.get(self.result_redis_key))
+        result_data = self.encoded_result
+        if result_data is not None:
+            return self.get_encoding().decode(result_data)
+        return None
 
     @property
     def status(self) -> JobStatus:
@@ -90,11 +102,24 @@ class Job:
 
     @property
     def kwargs(self) -> dict:
-        return get_json_or_none(self.redis.hget(self.redis_key, "kwargs"))
+        kwargs_data = self.redis.hget(self.redis_key, "kwargs")
+        return self.get_encoding().decode(kwargs_data)
 
     @property
     def callable_name(self) -> str:
         return self.redis.hget(self.redis_key, "callable").decode()
+
+    @property
+    def encoding_name(self) -> str:
+        encoding_name = self.redis.hget(self.redis_key, "encoding_name")
+        if encoding_name:
+            return encoding_name.decode()
+        # If there is no encoding name, assume this job is from an earlier version,
+        # and use the default encoding.
+        return encoding.default_encoding_name
+
+    def get_encoding(self) -> encoding.BaseEncoding:
+        return encoding.registry[self.encoding_name]()
 
     def get_queue(self) -> "Queue":
         from minique.models.queue import Queue

@@ -30,7 +30,7 @@ class JobRunner:
         job.ensure_exists()
 
     def acquire(self) -> None:
-        new_acquisition_info = json.dumps(self.get_acquisition_info())
+        new_acquisition_info = json.dumps(self.get_acquisition_info(), default=str)
         if not self.redis.hsetnx(self.job.redis_key, "acquired", new_acquisition_info):
             raise AlreadyAcquired(
                 "job {id} already acquired: {info}".format(
@@ -89,6 +89,7 @@ class JobRunner:
 
     def run(self) -> None:
         try:
+            encoding = self.job.get_encoding()
             self.acquire()
         except Exception as exc:
             self.process_exception(sys.exc_info())
@@ -99,18 +100,18 @@ class JobRunner:
         start_time = time.time()
         try:
             value = self.execute()
-            value = json.dumps(value)
+            value = encoding.encode(value)
             success = True
         except BaseException as exc:
             success = False
             exc_type, exc_value, exc_tb = excinfo = sys.exc_info()
-            value = json.dumps(
+            value = encoding.encode(
                 {
                     "exception_type": exc_type.__qualname__,
                     "exception_value": str(exc_value),
                     "traceback": traceback.format_exc(),
                 },
-                default=str,
+                failsafe=True,
             )
             interrupt = isinstance(exc, KeyboardInterrupt)
             self.process_exception(excinfo)

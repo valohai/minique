@@ -21,6 +21,7 @@ def test_basics(redis: Redis, success: bool, random_queue_name: str) -> None:
     r_job = worker.tick()
     assert job == r_job  # we executed that particular job, right?
     for job in (job, get_job(redis, job.id)):
+        assert job.encoding_name == "json"
         assert job.has_finished
         assert job.acquisition_info["worker"] == worker.id
         assert job.duration > 0

@@ -1,9 +1,9 @@
-import json
 import time
 from typing import Callable, Optional, Union
 
 from redis import Redis
 
+import minique.encoding as encoding
 from minique.enums import JobStatus
 from minique.excs import DuplicateJob
 from minique.models.job import Job
@@ -19,7 +19,11 @@ def enqueue(
     job_id: Optional[str] = None,
     job_ttl: int = 0,
     result_ttl: int = 86400 * 7,
+    encoding_name: str = None,
 ) -> Job:
+    if not encoding_name:
+        encoding_name = encoding.default_encoding_name
+    encoder = encoding.registry[encoding_name]()
     if not isinstance(callable, str):
         callable = "{module}.{qualname}".format(
             module=callable.__module__,
@@ -34,7 +38,8 @@ def enqueue(
     payload = {
         "queue": queue_name,
         "callable": str(callable),
-        "kwargs": json.dumps(kwargs or {}),
+        "kwargs": encoder.encode(kwargs or {}),
+        "encoding_name": encoding_name,
         "status": JobStatus.NONE.value,
         "ctime": time.time(),
         "job_ttl": int(job_ttl),

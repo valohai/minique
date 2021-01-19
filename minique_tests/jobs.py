@@ -9,6 +9,10 @@ def sum_positive_values(a, b):
     return a + b
 
 
+def wrap_kwargs(**kwargs):
+    return dict(kwargs.copy())
+
+
 def job_with_unjsonable_retval() -> datetime.datetime:
     return datetime.datetime.now()
 

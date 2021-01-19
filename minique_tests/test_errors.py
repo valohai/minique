@@ -1,5 +1,6 @@
 import sys
 import time
+import uuid
 
 import pytest
 from redis import Redis
@@ -22,6 +23,14 @@ def check_sentry_event_calls(sentry_event_calls, num_expected: int):
             assert any(  # pragma: no cover
                 call.args[0]["level"] == "error" for call in sentry_event_calls
             )
+
+
+def test_unjsonable_arg(redis: Redis, random_queue_name: str):
+    kwargs = {
+        "phooey": uuid.uuid4(),
+    }
+    with pytest.raises(TypeError):
+        enqueue(redis, random_queue_name, job_with_unjsonable_retval, kwargs)
 
 
 def test_unjsonable_retval(redis: Redis, random_queue_name: str, sentry_event_calls):
