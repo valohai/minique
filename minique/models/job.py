@@ -81,6 +81,20 @@ class Job:
         return None
 
     @property
+    def encoded_meta(self) -> Optional[bytes]:
+        return self.redis.hget(self.redis_key, "meta")
+
+    @property
+    def meta(self) -> Optional[Any]:
+        """
+        Get any possible in-band progress metadata for this job.
+        """
+        meta_data = self.encoded_meta
+        if meta_data is not None:
+            return self.get_encoding().decode(meta_data)
+        return None
+
+    @property
     def status(self) -> JobStatus:
         return JobStatus(self.redis.hget(self.redis_key, "status").decode())
 
@@ -125,6 +139,13 @@ class Job:
         from minique.models.queue import Queue
 
         return Queue(redis=self.redis, name=self.queue_name)
+
+    def set_meta(self, meta: Any):
+        """
+        Set the "in-band" progress metadata for this job.
+        Keep it short, though, for performance's sake...
+        """
+        self.redis.hset(self.redis_key, "meta", self.get_encoding().encode(meta))
 
     def __str__(self):
         return "<job %s>" % self.id
