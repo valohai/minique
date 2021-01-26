@@ -1,3 +1,5 @@
+import threading
+
 import pytest
 from redis.client import Redis
 
@@ -5,7 +7,12 @@ from minique.api import cancel_job, enqueue, get_job
 from minique.enums import JobStatus
 from minique.models.queue import Queue
 from minique.testing import run_synchronously
-from minique_tests.jobs import reverse_job_id
+from minique_tests.jobs import (
+    reverse_job_id,
+    job_with_a_message,
+    message_test_outbox,
+    message_test_inbox,
+)
 from minique_tests.worker import TestWorker
 
 
@@ -41,6 +48,22 @@ def test_job_object_access(redis: Redis, random_queue_name: str) -> None:
     job = enqueue(redis, random_queue_name, reverse_job_id)
     run_synchronously(job)
     assert job.result == job.id[::-1]
+
+
+def test_job_message(redis: Redis, random_queue_name: str) -> None:
+    job = enqueue(redis, random_queue_name, job_with_a_message)
+    worker_thread = threading.Thread(target=run_synchronously, args=(job,))
+    worker_thread.start()
+
+    def check_mailbox(expected_message):
+        nonce = message_test_outbox.get()
+        assert job.meta == expected_message
+        message_test_inbox.put(nonce)
+
+    check_mailbox("oh, hello")
+    check_mailbox({"message": "progress occurs", "status": [1, 2, 3]})
+    worker_thread.join()
+    assert job.result == 42
 
 
 def test_cancel(redis: Redis, random_queue_name: str) -> None:
