@@ -1,7 +1,7 @@
 import logging
 from os import getpid
 from platform import node
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from redis import Redis
 
@@ -17,7 +17,7 @@ class Worker:
     job_runner_class = JobRunner
 
     # This property may be ignored by subclasses, but it's here for convenience's sake.
-    allowed_callable_patterns = frozenset()
+    allowed_callable_patterns = frozenset()  # type: Iterable[str]
 
     def __init__(self, redis: Redis, queues: List[Queue]) -> None:
         self.id = self.compute_id()
@@ -46,6 +46,7 @@ class Worker:
         if rv:  # The rv is a 2-tuple (queue name, value)
             job_id = rv[1].decode()
             return Job(self.redis, job_id)
+        return None
 
     def tick(self) -> Optional[Job]:
         job = self.get_next_job()
@@ -58,7 +59,7 @@ class Worker:
         runner.run()
         return job
 
-    def loop(self):  # pragma: no cover
+    def loop(self) -> None:  # pragma: no cover
         while True:
             try:
                 self.tick()
@@ -68,8 +69,10 @@ class Worker:
                 self.log.error("Unexpected worker tick error", exc_info=True)
 
     def process_exception(
-        self, excinfo: Optional[tuple] = None, context: Optional[dict] = None
-    ):  # pragma: no cover
+        self,
+        excinfo: Optional[tuple] = None,
+        context: Optional[dict] = None,
+    ) -> None:  # pragma: no cover
         """
         A hook to log or process exceptions.
 
@@ -81,4 +84,4 @@ class Worker:
             with sentry_sdk.push_scope() as scope:
                 if context:
                     scope.set_context("minique", context)
-                sentry_sdk.capture_exception(excinfo)
+                sentry_sdk.capture_exception(excinfo)  # type: ignore

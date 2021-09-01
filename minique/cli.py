@@ -1,5 +1,6 @@
 import argparse
 import logging
+from typing import List, Optional
 
 from redis import StrictRedis
 
@@ -7,7 +8,7 @@ from minique.compat import sentry_sdk
 from minique.work.worker import Worker
 
 
-def get_parser():
+def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("-u", "--redis-url", required=True)
     parser.add_argument("-q", "--queues", nargs="+", required=True)
@@ -16,7 +17,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Optional[List[str]] = None) -> None:
     parser = get_parser()
     args = parser.parse_args(argv)
     logging.basicConfig(datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)

@@ -4,7 +4,7 @@ import logging
 import sys
 import time
 import traceback
-from typing import Callable
+from typing import Any, Callable, Union
 
 from redis import Redis
 
@@ -45,7 +45,7 @@ class JobRunner:
         # Override me in a subclass if you like!
         return {"worker": self.worker.id, "time": time.time()}
 
-    def execute(self):
+    def execute(self) -> Any:
         func = self.get_callable()
         kwargs = self.job.kwargs
         self.log.info("calling %s(%r)", func, kwargs)
@@ -68,9 +68,11 @@ class JobRunner:
         name = self.job.callable_name
         if not self.verify_callable_name(name):
             raise InvalidJob("Invalid job definition")
-        return import_by_string(name)
+        return import_by_string(name)  # type: ignore
 
-    def complete(self, success: bool, value: str, duration: float) -> None:
+    def complete(
+        self, success: bool, value: Union[str, bytes], duration: float
+    ) -> None:
         assert isinstance(success, bool)
         update_payload = {
             "status": (JobStatus.SUCCESS if success else JobStatus.FAILED).value,
@@ -78,7 +80,7 @@ class JobRunner:
         }
         if not self.redis.setnx(self.job.result_redis_key, value):  # pragma: no cover
             raise AlreadyResulted("job {id} already has result".format(id=self.job.id))
-        self.redis.hmset(self.job.redis_key, update_payload)
+        self.redis.hmset(self.job.redis_key, update_payload)  # type: ignore
         # Update expiries to the result TTL for both the job and the result
         self.redis.expire(self.job.result_redis_key, self.job.result_ttl)
         self.redis.expire(self.job.redis_key, self.job.result_ttl)
@@ -96,21 +98,22 @@ class JobRunner:
             raise exc  # could have had an exception in process_exception
         interrupt = False
         success = False
-        value = {"error": "unknown"}
+        encoded_value = encoding.encode({"error": "unknown"})
         start_time = time.time()
         try:
             value = self.execute()
-            value = encoding.encode(value)
+            encoded_value = encoding.encode(value)
             success = True
         except BaseException as exc:
             success = False
             exc_type, exc_value, exc_tb = excinfo = sys.exc_info()
-            value = encoding.encode(
-                {
-                    "exception_type": exc_type.__qualname__,
-                    "exception_value": str(exc_value),
-                    "traceback": traceback.format_exc(),
-                },
+            error_value = {
+                "exception_type": getattr(exc_type, "__qualname__", None),
+                "exception_value": str(exc_value),
+                "traceback": traceback.format_exc(),
+            }
+            encoded_value = encoding.encode(
+                error_value,
                 failsafe=True,
             )
             interrupt = isinstance(exc, KeyboardInterrupt)
@@ -118,7 +121,7 @@ class JobRunner:
         finally:
             end_time = time.time()
             self.complete(
-                success=success, value=value, duration=(end_time - start_time)
+                success=success, value=encoded_value, duration=(end_time - start_time)
             )
         if interrupt:  # pragma: no cover
             raise KeyboardInterrupt("Interrupt")

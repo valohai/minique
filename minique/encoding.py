@@ -1,8 +1,8 @@
 import json
-from typing import Union, Any
+from typing import Any, Dict, Optional, Union
 
 registry = {}
-default_encoding_name = None
+default_encoding_name = None  # type: Optional[str]
 
 
 def register_encoding(name, *, default=False):
@@ -41,11 +41,11 @@ class JSONEncoding(BaseEncoding):
         "ensure_ascii": False,
         "separators": (",", ":"),
     }
-    load_kwargs = {}
+    load_kwargs = {}  # type: ignore
     failsafe_default = str
 
     def encode(self, value: Any, failsafe: bool = False) -> Union[str, bytes]:
-        kwargs = self.dump_kwargs.copy()
+        kwargs = self.dump_kwargs.copy()  # type: Dict[str, Any]
         if failsafe:
             kwargs["default"] = self.failsafe_default
         return json.dumps(

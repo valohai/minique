@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 from redis import Redis
 
@@ -7,13 +7,17 @@ from minique import encoding
 from minique.compat import TYPE_CHECKING
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
 from minique.enums import JobStatus
-from minique.excs import NoSuchJob, AlreadyAcquired, AlreadyResulted, InvalidStatus
+from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidStatus, NoSuchJob
 
 if TYPE_CHECKING:
     from minique.models.queue import Queue
 
 
 class Job:
+    # Used for testing:
+    replacement_callable = None  # type: Optional[Callable]
+    replacement_kwargs = None  # type: Optional[dict]
+
     def __init__(self, redis: Redis, id: str) -> None:
         self.redis = redis
         self.id = str(id)
@@ -96,7 +100,7 @@ class Job:
 
     @property
     def status(self) -> JobStatus:
-        return JobStatus(self.redis.hget(self.redis_key, "status").decode())
+        return JobStatus(self.redis.hget(self.redis_key, "status").decode())  # type: ignore
 
     @property
     def exists(self) -> int:
@@ -104,24 +108,26 @@ class Job:
 
     @property
     def result_ttl(self) -> int:
-        return int(self.redis.hget(self.redis_key, "result_ttl"))
+        return int(self.redis.hget(self.redis_key, "result_ttl"))  # type: ignore
 
     @property
     def duration(self) -> float:
-        return float(self.redis.hget(self.redis_key, "duration"))
+        return float(self.redis.hget(self.redis_key, "duration"))  # type: ignore
 
     @property
     def queue_name(self) -> str:
-        return self.redis.hget(self.redis_key, "queue").decode()
+        return self.redis.hget(self.redis_key, "queue").decode()  # type: ignore
 
     @property
     def kwargs(self) -> dict:
         kwargs_data = self.redis.hget(self.redis_key, "kwargs")
+        if not kwargs_data:
+            return {}
         return self.get_encoding().decode(kwargs_data)
 
     @property
     def callable_name(self) -> str:
-        return self.redis.hget(self.redis_key, "callable").decode()
+        return self.redis.hget(self.redis_key, "callable").decode()  # type: ignore
 
     @property
     def encoding_name(self) -> str:
@@ -130,7 +136,7 @@ class Job:
             return encoding_name.decode()
         # If there is no encoding name, assume this job is from an earlier version,
         # and use the default encoding.
-        return encoding.default_encoding_name
+        return encoding.default_encoding_name or "no default encoding set"
 
     def get_encoding(self) -> encoding.BaseEncoding:
         return encoding.registry[self.encoding_name]()

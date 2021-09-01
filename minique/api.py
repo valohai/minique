@@ -1,5 +1,5 @@
 import time
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 from redis import Redis
 
@@ -15,11 +15,11 @@ def enqueue(
     redis: Redis,
     queue_name: str,
     callable: Union[Callable, str],
-    kwargs: Optional[dict] = None,
+    kwargs: Optional[Dict[str, Any]] = None,
     job_id: Optional[str] = None,
     job_ttl: int = 0,
     result_ttl: int = 86400 * 7,
-    encoding_name: str = None,
+    encoding_name: Optional[str] = None,
 ) -> Job:
     if not encoding_name:
         encoding_name = encoding.default_encoding_name

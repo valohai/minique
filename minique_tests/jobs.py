@@ -28,7 +28,7 @@ def reverse_job_id() -> str:
     return get_current_job().id[::-1]
 
 
-def job_with_a_message() -> str:
+def job_with_a_message() -> int:
     def _wait_for_message_passing():
         nonce = time.time()
         message_test_outbox.put(nonce)
