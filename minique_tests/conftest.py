@@ -23,7 +23,7 @@ def redis_url() -> str:
 
 
 @pytest.fixture()
-def redis(redis_url) -> Redis:
+def redis(redis_url: str) -> Redis:
     return Redis.from_url(redis_url)
 
 

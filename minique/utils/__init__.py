@@ -2,7 +2,7 @@ import random
 from contextlib import contextmanager
 from importlib import import_module
 from threading import local
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 
 from minique.compat import TYPE_CHECKING
 
@@ -12,10 +12,10 @@ if TYPE_CHECKING:
 _current_jobs = local()
 
 
-def import_by_string(callable: str) -> Callable:
-    module, _, func = callable.rpartition(".")
-    module = import_module(module)
-    func = getattr(module, func)
+def import_by_string(spec: str) -> Any:
+    module_name, _, func_name = spec.rpartition(".")
+    module = import_module(module_name)
+    func = getattr(module, func_name)
     return func
 
 
@@ -45,7 +45,7 @@ class cached_property(object):
         self.__doc__ = getattr(func, "__doc__", "")
         self.func = func
 
-    def __get__(self, obj: Any, cls: Any) -> str:
+    def __get__(self, obj: Any, cls: Any) -> Any:
         if obj is None:
             # We're being accessed from the class itself, not from an object
             return self
@@ -58,7 +58,7 @@ vowels = "aeiou"
 
 
 def get_random_pronounceable_string(length: int = 12) -> str:
-    s = []
+    s = []  # type: List[str]
     while length > 0 and len(s) < length:
         s.append(random.choice(consonants))
         s.append(random.choice(vowels) * random.choice((1, 1, 2)))

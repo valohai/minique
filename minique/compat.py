@@ -6,4 +6,9 @@ except ImportError:  # pragma: no cover
 try:
     import sentry_sdk
 except ImportError:
-    sentry_sdk = None
+    sentry_sdk = None  # type: ignore
+
+__all__ = [
+    "sentry_sdk",
+    "TYPE_CHECKING",
+]

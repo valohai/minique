@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from redis import Redis
 
@@ -30,7 +30,7 @@ class Queue:
         """
         return self.redis.delete(self.redis_key)
 
-    def enqueue_initial(self, job: "Job", payload: dict):
+    def enqueue_initial(self, job: "Job", payload: dict) -> None:
         assert payload["queue"] == self.name
         with self.redis.pipeline() as p:
             p.hmset(job.redis_key, payload)

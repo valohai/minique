@@ -1,3 +1,4 @@
-pip-tools
 pytest<6.2.0  # Python 3.5
 pytest-cov
+click<8.0  # Python 3.5
+packaging<20.9  # Python 3.5
