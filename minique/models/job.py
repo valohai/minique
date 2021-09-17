@@ -1,4 +1,5 @@
 import json
+import time
 from typing import Any, Callable, Optional, Tuple
 
 from redis import Redis
@@ -103,6 +104,16 @@ class Job:
         return JobStatus(self.redis.hget(self.redis_key, "status").decode())  # type: ignore
 
     @property
+    def heartbeat(self) -> Optional[float]:
+        """
+        Get heartbeat of this job after job's refresh_heartbeat has been called
+        """
+        heartbeat = self.redis.hget(self.redis_key, "heartbeat")
+        if heartbeat is None:
+            return None
+        return float(heartbeat)  # type: ignore
+
+    @property
     def exists(self) -> int:
         return self.redis.exists(self.redis_key)
 
@@ -152,6 +163,12 @@ class Job:
         Keep it short, though, for performance's sake...
         """
         self.redis.hset(self.redis_key, "meta", self.get_encoding().encode(meta))
+
+    def refresh_heartbeat(self):
+        """
+        Set time.time() into heartbeat.
+        """
+        self.redis.hset(self.redis_key, "heartbeat", time.time())
 
     def __str__(self):
         return "<job %s>" % self.id
