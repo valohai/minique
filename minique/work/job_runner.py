@@ -1,6 +1,7 @@
 import fnmatch
 import json
 import logging
+import random
 import sys
 import time
 import traceback
@@ -120,9 +121,26 @@ class JobRunner:
             self.process_exception(excinfo)
         finally:
             end_time = time.time()
-            self.complete(
-                success=success, value=encoded_value, duration=(end_time - start_time)
-            )
+            for attempt in range(10):
+                try:
+                    self.complete(
+                        success=success,
+                        value=encoded_value,
+                        duration=(end_time - start_time),
+                    )
+                    break
+                except AlreadyResulted as arx:
+                    self.log.error(str(arx), exc_info=True)
+                    break
+                except Exception:
+                    # https://cloud.google.com/iot/docs/how-tos/exponential-backoff
+                    delay = min(30, 1 * 2 ** attempt + random.uniform(0, 1))
+                    self.log.warning(
+                        "Failed completing job, trying again in %s sec",
+                        delay,
+                        exc_info=True,
+                    )
+                    time.sleep(delay)
         if interrupt:  # pragma: no cover
             raise KeyboardInterrupt("Interrupt")
 
