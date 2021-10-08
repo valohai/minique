@@ -17,12 +17,9 @@ def check_sentry_event_calls(sentry_event_calls, num_expected: int):
     # Check that an error got recorded, if Sentry is enabled
     if sentry_event_calls is not None:
         assert len(sentry_event_calls) == num_expected
-        # TODO: for some reason this check flakes on Python 3.5:
-        #       TypeError: string indices must be integers
-        if sys.version_info >= (3, 6):
-            assert any(  # pragma: no cover
-                call.args[0]["level"] == "error" for call in sentry_event_calls
-            )
+        assert any(  # pragma: no cover
+            call.args[0]["level"] == "error" for call in sentry_event_calls
+        )
 
 
 def test_unjsonable_arg(redis: Redis, random_queue_name: str):

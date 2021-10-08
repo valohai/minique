@@ -5,11 +5,10 @@ import random
 import sys
 import time
 import traceback
-from typing import Any, Callable, Union
+from typing import TYPE_CHECKING, Any, Callable, Union
 
 from redis import Redis
 
-from minique.compat import TYPE_CHECKING
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidJob
 from minique.models.job import Job

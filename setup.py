@@ -21,6 +21,7 @@ if __name__ == "__main__":
         maintainer_email="akx@iki.fi",
         license="MIT",
         install_requires=["redis>=2.10.0"],
+        python_requires=">=3.6",
         extras_require={
             "sentry": [
                 "sentry_sdk~=0.19.0",

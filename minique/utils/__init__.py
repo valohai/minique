@@ -2,9 +2,7 @@ import random
 from contextlib import contextmanager
 from importlib import import_module
 from threading import local
-from typing import Any, Callable, List, Optional
-
-from minique.compat import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 if TYPE_CHECKING:
     from minique.models.job import Job
