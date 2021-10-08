@@ -23,9 +23,7 @@ class Worker:
         self.id = self.compute_id()
         self.redis = redis
         self.queues = list(queues)
-        self.log = logging.getLogger(
-            "{}.{}".format(__name__, self.id.replace(".", "_"))
-        )
+        self.log = logging.getLogger(f"{__name__}.{self.id.replace('.', '_')}")
         assert all(isinstance(q, Queue) for q in queues)
 
     @classmethod
@@ -39,7 +37,8 @@ class Worker:
 
     def compute_id(self) -> str:
         # Override me in a subclass if you like!
-        return "w-{node}-{pid}".format(node=node().split(".")[0], pid=getpid())
+        node_base = node().split(".")[0]
+        return f"w-{node_base}-{getpid()}"
 
     def get_next_job(self) -> Optional[Job]:
         rv = self.redis.blpop([q.redis_key for q in self.queues], self.queue_timeout)

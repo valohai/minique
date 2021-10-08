@@ -53,7 +53,7 @@ class JobPacemakerThread(threading.Thread):
 
     def __init__(self, *, job: Job, interval: float):
         self.job = job
-        super().__init__(name="JobHeartbeat-%s" % job.id)
+        super().__init__(name=f"JobHeartbeat-{job.id}")
         self._stop_signal = threading.Event()
         self._interval = interval
 

@@ -31,7 +31,7 @@ def get_current_job() -> Optional["Job"]:
     return getattr(_current_jobs, "current_job", None)
 
 
-class cached_property(object):
+class cached_property:
     """A property that is only computed once per instance and then replaces
     itself with an ordinary attribute. Deleting the attribute resets the
     property.

@@ -11,7 +11,7 @@ from minique_tests.worker import TestWorker
 def special_dump(o):
     if isinstance(o, set):
         return {"$set$": list(o)}
-    raise TypeError("Unable to encode: %s" % o)
+    raise TypeError(f"Unable to encode: {o}")
 
 
 def special_load(o):
@@ -31,7 +31,7 @@ class HonkJobRunner(JobRunner):
         print("Hooooooooonk.")
 
     def process_exception(self, excinfo):
-        print("Alarmed honk! {}".format(excinfo))
+        print(f"Alarmed honk! {excinfo}")
 
 
 class HonkWorker(TestWorker):

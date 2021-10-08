@@ -25,16 +25,13 @@ def enqueue(
         encoding_name = encoding.default_encoding_name
     encoder = encoding.registry[encoding_name]()
     if not isinstance(callable, str):
-        callable = "{module}.{qualname}".format(
-            module=callable.__module__,
-            qualname=callable.__qualname__,
-        )
+        callable = f"{callable.__module__}.{callable.__qualname__}"
 
     if not job_id:
         job_id = get_random_pronounceable_string()
     job = Job(redis, job_id)
     if job.exists:
-        raise DuplicateJob("duplicate job: {id}".format(id=job_id))
+        raise DuplicateJob(f"duplicate job: {job_id}")
     payload = {
         "queue": queue_name,
         "callable": str(callable),

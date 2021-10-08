@@ -18,7 +18,7 @@ class Queue:
 
     @cached_property
     def redis_key(self):
-        return "%s%s" % (QUEUE_KEY_PREFIX, self.name)
+        return f"{QUEUE_KEY_PREFIX}{self.name}"
 
     @property
     def length(self) -> int:
@@ -57,9 +57,7 @@ class Queue:
                  the boolean is true if the job was indeed re-queued
         """
         if not self.redis.exists(job.redis_key):
-            raise NoSuchJob(
-                "Job object for {id} has disappeared, can not re-enqueue".format(id=id)
-            )
+            raise NoSuchJob(f"Job object for {id} has disappeared, can not re-enqueue")
 
         # NB: This is mildly racy; two processes could be doing this scan concurrently.
         #     Technically having an entry in the queue multiple times shouldn't be a problem, since
