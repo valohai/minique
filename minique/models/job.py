@@ -1,11 +1,10 @@
 import json
 import time
-from typing import Any, Callable, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple
 
 from redis import Redis
 
 from minique import encoding
-from minique.compat import TYPE_CHECKING
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidStatus, NoSuchJob
@@ -25,7 +24,7 @@ class Job:
 
     def ensure_exists(self) -> None:
         if not self.exists:
-            raise NoSuchJob("Job {id} does not exist".format(id=self.id))
+            raise NoSuchJob(f"Job {self.id} does not exist")
 
     def ensure_enqueued(self) -> Tuple[bool, int]:
         """
@@ -33,30 +32,24 @@ class Job:
         """
         if self.has_started:
             raise AlreadyAcquired(
-                "Job {id} has already been started, will not enqueue".format(id=self.id)
+                f"Job {self.id} has already been started, will not enqueue"
             )
         if self.has_finished:
             raise AlreadyResulted(
-                "Job {id} has already been finished, will not enqueue".format(
-                    id=self.id
-                )
+                f"Job {self.id} has already been finished, will not enqueue"
             )
         status = self.status
         if status in (JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.CANCELLED):
-            raise InvalidStatus(
-                "Job {id} has status {status}, will not enqueue".format(
-                    id=self.id, status=status
-                )
-            )
+            raise InvalidStatus(f"Job {self.id} has status {status}, will not enqueue")
         return self.get_queue().ensure_enqueued(self)
 
     @property
     def redis_key(self) -> str:
-        return "%s%s" % (JOB_KEY_PREFIX, self.id)
+        return f"{JOB_KEY_PREFIX}{self.id}"
 
     @property
     def result_redis_key(self) -> str:
-        return "%s%s" % (RESULT_KEY_PREFIX, self.id)
+        return f"{RESULT_KEY_PREFIX}{self.id}"
 
     @property
     def acquisition_info(self) -> Optional[dict]:
@@ -171,7 +164,7 @@ class Job:
         self.redis.hset(self.redis_key, "heartbeat", time.time())
 
     def __str__(self):
-        return "<job %s>" % self.id
+        return f"<job {self.id}>"
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Job) and (self.id == other.id)

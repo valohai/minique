@@ -5,11 +5,10 @@ import random
 import sys
 import time
 import traceback
-from typing import Any, Callable, Union
+from typing import TYPE_CHECKING, Any, Callable, Union
 
 from redis import Redis
 
-from minique.compat import TYPE_CHECKING
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidJob
 from minique.models.job import Job
@@ -25,19 +24,14 @@ class JobRunner:
         self.job = job
         self.redis = job.redis
         assert isinstance(self.redis, Redis)
-        self.log = logging.getLogger(
-            "{}.{}".format(__name__, str(self.job.id).replace(".", "_"))
-        )
+        self.log = logging.getLogger(f"{__name__}.{str(self.job.id).replace('.', '_')}")
         job.ensure_exists()
 
     def acquire(self) -> None:
         new_acquisition_info = json.dumps(self.get_acquisition_info(), default=str)
         if not self.redis.hsetnx(self.job.redis_key, "acquired", new_acquisition_info):
             raise AlreadyAcquired(
-                "job {id} already acquired: {info}".format(
-                    id=self.job.id,
-                    info=self.job.acquisition_info,
-                )
+                f"job {self.job.id} already acquired: {self.job.acquisition_info}"
             )
         self.redis.hset(self.job.redis_key, "status", JobStatus.ACQUIRED.value)
         self.redis.persist(self.job.redis_key)
@@ -80,7 +74,7 @@ class JobRunner:
             "duration": float(duration),
         }
         if not self.redis.setnx(self.job.result_redis_key, value):  # pragma: no cover
-            raise AlreadyResulted("job {id} already has result".format(id=self.job.id))
+            raise AlreadyResulted(f"job {self.job.id} already has result")
         self.redis.hmset(self.job.redis_key, update_payload)  # type: ignore
         # Update expiries to the result TTL for both the job and the result
         self.redis.expire(self.job.result_redis_key, self.job.result_ttl)

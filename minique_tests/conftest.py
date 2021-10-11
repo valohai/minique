@@ -29,7 +29,7 @@ def redis(redis_url: str) -> Redis:
 
 @pytest.fixture()
 def random_queue_name() -> str:
-    return "test_queue_%s" % get_random_pronounceable_string()
+    return f"test_queue_{get_random_pronounceable_string()}"
 
 
 @pytest.fixture
