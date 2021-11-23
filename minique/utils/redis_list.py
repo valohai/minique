@@ -4,7 +4,11 @@ from redis import Redis
 
 
 def read_list(
-    redis_conn: Redis, key: str, *, chunk_size: int = 4096, last_n: Optional[int] = None
+    redis_conn: "Redis[bytes]",
+    key: str,
+    *,
+    chunk_size: int = 4096,
+    last_n: Optional[int] = None
 ) -> Iterable[bytes]:
     """
     Read a possibly large Redis list in chunks.

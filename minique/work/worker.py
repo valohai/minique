@@ -1,7 +1,7 @@
 import logging
 from os import getpid
 from platform import node
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union, Any
 
 from redis import Redis
 
@@ -9,6 +9,7 @@ from minique.compat import sentry_sdk
 from minique.enums import JobStatus
 from minique.models.job import Job
 from minique.models.queue import Queue
+from minique.types import ExcInfo, ContextDict
 from minique.work.job_runner import JobRunner
 
 
@@ -19,7 +20,11 @@ class Worker:
     # This property may be ignored by subclasses, but it's here for convenience's sake.
     allowed_callable_patterns = frozenset()  # type: Iterable[str]
 
-    def __init__(self, redis: Redis, queues: List[Queue]) -> None:
+    def __init__(
+        self,
+        redis: "Redis[bytes]",
+        queues: List[Queue],
+    ) -> None:
         self.id = self.compute_id()
         self.redis = redis
         self.queues = list(queues)
@@ -28,7 +33,10 @@ class Worker:
 
     @classmethod
     def for_queue_names(
-        cls, redis: Redis, queue_names: Union[List[str], str], **kwargs
+        cls,
+        redis: "Redis[bytes]",
+        queue_names: Union[List[str], str],
+        **kwargs: Any,
     ) -> "Worker":
         if isinstance(queue_names, str):
             queue_names = [queue_names]
@@ -69,8 +77,8 @@ class Worker:
 
     def process_exception(
         self,
-        excinfo: Optional[tuple] = None,
-        context: Optional[dict] = None,
+        excinfo: Optional[ExcInfo] = None,
+        context: Optional[ContextDict] = None,
     ) -> None:  # pragma: no cover
         """
         A hook to log or process exceptions.
@@ -83,4 +91,4 @@ class Worker:
             with sentry_sdk.push_scope() as scope:
                 if context:
                     scope.set_context("minique", context)
-                sentry_sdk.capture_exception(excinfo)  # type: ignore
+                sentry_sdk.capture_exception(excinfo)

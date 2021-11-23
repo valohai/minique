@@ -2,7 +2,7 @@ import random
 from contextlib import contextmanager
 from importlib import import_module
 from threading import local
-from typing import TYPE_CHECKING, Any, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Iterator
 
 if TYPE_CHECKING:
     from minique.models.job import Job
@@ -18,7 +18,7 @@ def import_by_string(spec: str) -> Any:
 
 
 @contextmanager
-def _set_current_job(job: "Job"):
+def _set_current_job(job: "Job") -> Iterator[None]:
     assert not get_current_job()
     _current_jobs.current_job = job
     try:
@@ -28,7 +28,7 @@ def _set_current_job(job: "Job"):
 
 
 def get_current_job() -> Optional["Job"]:
-    return getattr(_current_jobs, "current_job", None)
+    return getattr(_current_jobs, "current_job", None)  # type: ignore[no-any-return]
 
 
 class cached_property:
@@ -39,7 +39,7 @@ class cached_property:
     Source: https://github.com/bottlepy/bottle/blob/0.11.5/bottle.py#L175
     """
 
-    def __init__(self, func: Callable) -> None:
+    def __init__(self, func: Callable[..., Any]) -> None:
         self.__doc__ = getattr(func, "__doc__", "")
         self.func = func
 

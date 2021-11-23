@@ -1,6 +1,6 @@
 import json
 import time
-from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Dict
 
 from redis import Redis
 
@@ -15,10 +15,10 @@ if TYPE_CHECKING:
 
 class Job:
     # Used for testing:
-    replacement_callable = None  # type: Optional[Callable]
-    replacement_kwargs = None  # type: Optional[dict]
+    replacement_callable: Optional[Callable[..., Any]] = None
+    replacement_kwargs: Optional[Dict[str, Any]] = None
 
-    def __init__(self, redis: Redis, id: str) -> None:
+    def __init__(self, redis: "Redis[bytes]", id: str) -> None:
         self.redis = redis
         self.id = str(id)
 
@@ -52,11 +52,11 @@ class Job:
         return f"{RESULT_KEY_PREFIX}{self.id}"
 
     @property
-    def acquisition_info(self) -> Optional[dict]:
+    def acquisition_info(self) -> Optional[Dict[str, Any]]:
         # Acquisition info is always stored as JSON, not with the `encoding`
         acquisition_json = self.redis.hget(self.redis_key, "acquired")
         if acquisition_json:
-            return json.loads(acquisition_json.decode())
+            return json.loads(acquisition_json.decode())  # type: ignore[no-any-return]
         return None
 
     @property
@@ -104,7 +104,7 @@ class Job:
         heartbeat = self.redis.hget(self.redis_key, "heartbeat")
         if heartbeat is None:
             return None
-        return float(heartbeat)  # type: ignore
+        return float(heartbeat)
 
     @property
     def exists(self) -> int:
@@ -123,11 +123,11 @@ class Job:
         return self.redis.hget(self.redis_key, "queue").decode()  # type: ignore
 
     @property
-    def kwargs(self) -> dict:
+    def kwargs(self) -> Dict[str, Any]:
         kwargs_data = self.redis.hget(self.redis_key, "kwargs")
         if not kwargs_data:
             return {}
-        return self.get_encoding().decode(kwargs_data)
+        return self.get_encoding().decode(kwargs_data)  # type: ignore[no-any-return]
 
     @property
     def callable_name(self) -> str:
@@ -150,20 +150,20 @@ class Job:
 
         return Queue(redis=self.redis, name=self.queue_name)
 
-    def set_meta(self, meta: Any):
+    def set_meta(self, meta: Any) -> None:
         """
         Set the "in-band" progress metadata for this job.
         Keep it short, though, for performance's sake...
         """
         self.redis.hset(self.redis_key, "meta", self.get_encoding().encode(meta))
 
-    def refresh_heartbeat(self):
+    def refresh_heartbeat(self) -> None:
         """
         Set time.time() into heartbeat.
         """
         self.redis.hset(self.redis_key, "heartbeat", time.time())
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"<job {self.id}>"
 
     def __eq__(self, other: Any) -> bool:

@@ -1,12 +1,14 @@
 import json
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, Callable, Type
 
 registry = {}
-default_encoding_name = None  # type: Optional[str]
+default_encoding_name: Optional[str] = None
 
 
-def register_encoding(name, *, default=False):
-    def decorator(cls):
+def register_encoding(
+    name: str, *, default: bool = False
+) -> Callable[[Type["BaseEncoding"]], Type["BaseEncoding"]]:
+    def decorator(cls: Type["BaseEncoding"]) -> Type["BaseEncoding"]:
         global default_encoding_name
         registry[name] = cls
         if default:

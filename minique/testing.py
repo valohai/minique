@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Dict
 
 from minique.models.job import Job
 from minique.utils import _set_current_job, import_by_string
@@ -19,8 +19,8 @@ class TestJobRunner(JobRunner):
 
 def run_synchronously(
     job: Job,
-    replacement_callable: Optional[Callable] = None,
-    replacement_kwargs: Optional[dict] = None,
+    replacement_callable: Optional[Callable[..., Any]] = None,
+    replacement_kwargs: Optional[Dict[str, Any]] = None,
 ) -> None:
     job.replacement_callable = replacement_callable
     job.replacement_kwargs = replacement_kwargs
