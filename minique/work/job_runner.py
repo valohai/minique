@@ -5,13 +5,14 @@ import random
 import sys
 import time
 import traceback
-from typing import TYPE_CHECKING, Any, Callable, Union
+from typing import TYPE_CHECKING, Any, Callable, Union, Dict
 
 from redis import Redis
 
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidJob
 from minique.models.job import Job
+from minique.types import ExcInfo
 from minique.utils import _set_current_job, import_by_string
 
 if TYPE_CHECKING:
@@ -24,7 +25,9 @@ class JobRunner:
         self.job = job
         self.redis = job.redis
         assert isinstance(self.redis, Redis)
-        self.log = logging.getLogger(f"{__name__}.{str(self.job.id).replace('.', '_')}")
+        self.log: logging.Logger = logging.getLogger(
+            f"{__name__}.{str(self.job.id).replace('.', '_')}"
+        )
         job.ensure_exists()
 
     def acquire(self) -> None:
@@ -36,7 +39,7 @@ class JobRunner:
         self.redis.hset(self.job.redis_key, "status", JobStatus.ACQUIRED.value)
         self.redis.persist(self.job.redis_key)
 
-    def get_acquisition_info(self) -> dict:
+    def get_acquisition_info(self) -> Dict[str, Any]:
         # Override me in a subclass if you like!
         return {"worker": self.worker.id, "time": time.time()}
 
@@ -59,7 +62,7 @@ class JobRunner:
             )
         return True
 
-    def get_callable(self) -> Callable:
+    def get_callable(self) -> Callable[..., Any]:
         name = self.job.callable_name
         if not self.verify_callable_name(name):
             raise InvalidJob("Invalid job definition")
@@ -138,7 +141,7 @@ class JobRunner:
         if interrupt:  # pragma: no cover
             raise KeyboardInterrupt("Interrupt")
 
-    def process_exception(self, excinfo):
+    def process_exception(self, excinfo: ExcInfo) -> None:
         try:
             self.worker.process_exception(
                 excinfo,

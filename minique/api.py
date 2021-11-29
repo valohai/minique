@@ -12,9 +12,9 @@ from minique.utils import get_random_pronounceable_string
 
 
 def enqueue(
-    redis: Redis,
+    redis: "Redis[bytes]",
     queue_name: str,
-    callable: Union[Callable, str],
+    callable: Union[Callable[..., Any], str],
     kwargs: Optional[Dict[str, Any]] = None,
     job_id: Optional[str] = None,
     job_ttl: int = 0,
@@ -23,7 +23,7 @@ def enqueue(
 ) -> Job:
     if not encoding_name:
         encoding_name = encoding.default_encoding_name
-    encoder = encoding.registry[encoding_name]()
+    encoder = encoding.registry[str(encoding_name)]()
     if not isinstance(callable, str):
         callable = f"{callable.__module__}.{callable.__qualname__}"
 
@@ -48,20 +48,20 @@ def enqueue(
     return job
 
 
-def get_job(redis: Redis, job_id: str) -> Job:
+def get_job(redis: "Redis[bytes]", job_id: str) -> Job:
     job = Job(redis, job_id)
     job.ensure_exists()
     return job
 
 
-def cancel_job(redis: Redis, job_id: str) -> bool:
+def cancel_job(redis: "Redis[bytes]", job_id: str) -> bool:
     """
     Cancel the job with the given job ID.
 
     If a worker is already busy with the job, it may not immediately quit,
     and as such, the job is not set to cancelled state.
 
-    :type redis: redis.Redis
+    :param redis: Redis connection
     :param job_id: Job ID.
     :raises minique.excs.NoSuchJob: if the job does not exist.
     """

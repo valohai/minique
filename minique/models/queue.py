@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, Any
 
 from redis import Redis
 
@@ -12,25 +12,25 @@ if TYPE_CHECKING:
 
 
 class Queue:
-    def __init__(self, redis: Redis, name: str) -> None:
+    def __init__(self, redis: "Redis[bytes]", name: str) -> None:
         self.redis = redis
         self.name = str(name)
 
     @cached_property
-    def redis_key(self):
+    def redis_key(self) -> str:
         return f"{QUEUE_KEY_PREFIX}{self.name}"
 
     @property
     def length(self) -> int:
         return self.redis.llen(self.redis_key)
 
-    def clear(self):
+    def clear(self) -> Any:
         """
         Entirely clear this queue. Do not call this unless you're willing to risk orphaned jobs.
         """
         return self.redis.delete(self.redis_key)
 
-    def enqueue_initial(self, job: "Job", payload: dict) -> None:
+    def enqueue_initial(self, job: "Job", payload: dict) -> None:  # type: ignore[type-arg]
         assert payload["queue"] == self.name
         with self.redis.pipeline() as p:
             p.hmset(job.redis_key, payload)
