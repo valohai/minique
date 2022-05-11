@@ -131,7 +131,7 @@ class JobRunner:
                     break
                 except Exception:
                     # https://cloud.google.com/iot/docs/how-tos/exponential-backoff
-                    delay = min(30, 1 * 2 ** attempt + random.uniform(0, 1))
+                    delay = min(30, 2**attempt + random.uniform(0, 1))
                     self.log.warning(
                         "Failed completing job, trying again in %s sec",
                         delay,
