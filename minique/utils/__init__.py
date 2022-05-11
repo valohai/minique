@@ -28,7 +28,7 @@ def _set_current_job(job: "Job") -> Iterator[None]:
 
 
 def get_current_job() -> Optional["Job"]:
-    return getattr(_current_jobs, "current_job", None)  # type: ignore[no-any-return]
+    return getattr(_current_jobs, "current_job", None)
 
 
 class cached_property:
