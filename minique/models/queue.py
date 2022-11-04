@@ -40,6 +40,7 @@ class Queue:
             p.execute()
 
     def get_queue_index(self, job: "Job") -> Optional[int]:
+        # TODO: use `LPOS` (https://redis.io/commands/lpos/) when available for this
         job_id_bytes = str(job.id).encode()
         for index, value in enumerate(read_list(self.redis, self.redis_key)):
             if value == job_id_bytes:
