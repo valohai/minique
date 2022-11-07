@@ -1,12 +1,10 @@
-minique /miniːk/
-================
+# minique /miniːk/
 
 A minimal Redis job queue for Python 3.
 
-Usage
------
+## Usage
 
-* Have a Redis server running.
+- Have a Redis server running.
 
 ### Client
 
@@ -38,17 +36,16 @@ job = get_job(redis, job_id)
 
 ### Worker(s)
 
-* Ensure your workers are able to import the functions you wish to run.
-* Set the callables the worker will allow with `--allow-callable`.
-  * Alternately, you may wish to subclass `minique.work.job_runner.JobRunner`
+- Ensure your workers are able to import the functions you wish to run.
+- Set the callables the worker will allow with `--allow-callable`.
+  - Alternately, you may wish to subclass `minique.work.job_runner.JobRunner`
     to specify an entirely different lookup mechanism.
 
 ```bash
 $ minique -u redis://localhost:6379/4 -q work -q anotherqueue -q thirdqueue --allow-callable 'my_jobs.*'
 ```
 
-Sentry Support
---------------
+## Sentry Support
 
 Minique automatically integrates with the [Sentry](https://sentry.io/welcome/)
 exception tracking service.
@@ -64,5 +61,11 @@ also work as you would expect.
 
 Exceptions occurring during job execution will be sent to Sentry and annotated with `minique` context
 describing the job ID and queue name.
+
+### Development
+
+* Linting happens with `pre-commit`.
+* Tests are run with `pytest`. (Install with `pip install -e .[test]`.)
+* Code in `minique` is expected to pass `mypy --strict`.
 
 [extras]: https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras

@@ -3,21 +3,23 @@ name: CI
   push:
     branches:
       - master
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - master
 jobs:
   Test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         include:
-          - python-version: '3.6'
           - python-version: '3.7'
           - python-version: '3.8'
           - python-version: '3.9'
           - python-version: '3.10'
-          - python-version: '3.10'
+          - python-version: '3.11'
+          - python-version: '3.11'
             install-extra: '[sentry]'
     services:
       redis:
@@ -29,44 +31,60 @@ jobs:
       SENTRY_DSN: 'http://user:pass@localhost:12340/foo'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
+      - uses: actions/checkout@v2
       - name: 'Set up Python ${{ matrix.python-version }}'
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '${{ matrix.python-version }}'
-      - uses: actions/checkout@v2
-      - run: 'pip install -e ".$EXTRA" -r requirements/requirements-test.txt'
+      - run: 'pip install -e ".$EXTRA" -e ".[test]"'
         env:
           EXTRA: '${{ matrix.install-extra }}'
       - run: py.test -vvv --cov .
-      - run: 'bash <(curl -s https://codecov.io/bash)'
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: 'Python ${{ matrix.python-version }}'
   Lint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
-      - name: 'Set up Python'
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
       - uses: actions/checkout@v2
-      - run: 'pip install -r requirements/requirements-lint.txt'
-      - run: black --check .
-      - run: flake8 minique
-      - run: mypy --strict minique
-      - run: bandit -r . -s B101,B311
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - uses: pre-commit/action@v3.0.0
+  Mypy:
+    runs-on: ubuntu-22.04
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install -e .[sentry] mypy==0.950
+      - run: mypy --strict --install-types --non-interactive --show-error-codes minique
   Build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    needs: [ Lint, Mypy, Test ]
     env:
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
-      - name: 'Set up Python'
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
       - uses: actions/checkout@v2
-      - run: pip install build
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install build twine
       - run: python -m build .
+      - run: twine check dist/*
       - uses: actions/upload-artifact@v3
         with:
           name: build
           path: dist
+      - name: Publish distribution to PyPI
+        if: startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          print_hash: true
+          password: ${{ secrets.PYPI_API_TOKEN }}

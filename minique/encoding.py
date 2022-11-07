@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional, Union, Callable, Type
+from typing import Any, Callable, Dict, Optional, Type, Union
 
 registry = {}
 default_encoding_name: Optional[str] = None

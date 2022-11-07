@@ -5,7 +5,7 @@ import random
 import sys
 import time
 import traceback
-from typing import TYPE_CHECKING, Any, Callable, Union, Dict
+from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
 from redis import Redis
 
@@ -150,5 +150,5 @@ class JobRunner:
                     "queue": str(self.job.queue_name),
                 },
             )
-        except Exception:  # noqa
+        except Exception:
             self.log.warning("error running process_exception()", exc_info=True)

@@ -2,7 +2,7 @@ import pytest
 from redis import Redis
 
 from minique.api import enqueue
-from minique.encoding import register_encoding, JSONEncoding
+from minique.encoding import JSONEncoding, register_encoding
 from minique.testing import run_synchronously
 from minique.work.job_runner import JobRunner
 from minique_tests.worker import TestWorker

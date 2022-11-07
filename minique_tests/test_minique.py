@@ -8,10 +8,10 @@ from minique.enums import JobStatus
 from minique.models.queue import Queue
 from minique.testing import run_synchronously
 from minique_tests.jobs import (
-    reverse_job_id,
     job_with_a_message,
-    message_test_outbox,
     message_test_inbox,
+    message_test_outbox,
+    reverse_job_id,
 )
 from minique_tests.worker import TestWorker
 
@@ -27,7 +27,7 @@ def test_basics(redis: Redis, success: bool, random_queue_name: str) -> None:
     worker = TestWorker.for_queue_names(redis, [random_queue_name])
     r_job = worker.tick()
     assert job == r_job  # we executed that particular job, right?
-    for job in (job, get_job(redis, job.id)):
+    for job in (job, get_job(redis, job.id)):  # noqa: B020
         assert job.encoding_name == "json"
         assert job.has_finished
         assert job.acquisition_info["worker"] == worker.id
@@ -70,9 +70,8 @@ def test_cancel(redis: Redis, random_queue_name: str) -> None:
     job = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     assert Queue(redis, random_queue_name).length == 1
     cancel_job(redis, job.id)
-    assert (
-        Queue(redis, random_queue_name).length == 0
-    )  # Canceling does remove the job from the queue
+    # Canceling does remove the job from the queue?
+    assert Queue(redis, random_queue_name).length == 0
     TestWorker.for_queue_names(redis, random_queue_name).tick()
 
 
@@ -83,9 +82,8 @@ def test_ensure_enqueued(redis: Redis, random_queue_name: str) -> None:
     assert queue.length == 2
     assert j1.ensure_enqueued() == (False, 0)  # Did not need to re-enqueue
     assert j2.ensure_enqueued() == (False, 1)  # Did not need to re-enqueue
-    assert (
-        redis.lpop(queue.redis_key) == j1.id.encode()
-    )  # pop first item, must be the first job
+    j1_id = j1.id.encode()
+    assert redis.lpop(queue.redis_key) == j1_id  # pop first item, must be the first job
     assert queue.length == 1
     assert j1.ensure_enqueued() == (True, 1)  # Did re-enqueue in last position
     assert j2.ensure_enqueued() == (False, 0)  # Did not need to re-enqueue

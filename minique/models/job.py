@@ -1,6 +1,6 @@
 import json
 import time
-from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Dict
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple
 
 from redis import Redis
 

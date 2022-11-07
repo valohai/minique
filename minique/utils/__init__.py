@@ -2,7 +2,7 @@ import random
 from contextlib import contextmanager
 from importlib import import_module
 from threading import local
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Iterator
+from typing import TYPE_CHECKING, Any, Callable, Iterator, List, Optional
 
 if TYPE_CHECKING:
     from minique.models.job import Job
@@ -31,7 +31,7 @@ def get_current_job() -> Optional["Job"]:
     return getattr(_current_jobs, "current_job", None)
 
 
-class cached_property:
+class cached_property:  # TODO: remove when py3.8+ only  # noqa: N801
     """A property that is only computed once per instance and then replaces
     itself with an ordinary attribute. Deleting the attribute resets the
     property.

@@ -1,5 +1,5 @@
 from types import TracebackType
-from typing import Tuple, Type, Dict, Any, Union
+from typing import Any, Dict, Tuple, Type, Union
 
 ExcInfo = Union[
     Tuple[Type[BaseException], BaseException, TracebackType],
