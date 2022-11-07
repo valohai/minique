@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Dict
+from typing import Any, Callable, Dict, Optional
 
 from minique.models.job import Job
 from minique.utils import _set_current_job, import_by_string

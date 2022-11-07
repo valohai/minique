@@ -1,7 +1,7 @@
 import logging
 from os import getpid
 from platform import node
-from typing import Iterable, List, Optional, Union, Any
+from typing import Any, Iterable, List, Optional, Union
 
 from redis import Redis
 
@@ -9,7 +9,7 @@ from minique.compat import sentry_sdk
 from minique.enums import JobStatus
 from minique.models.job import Job
 from minique.models.queue import Queue
-from minique.types import ExcInfo, ContextDict
+from minique.types import ContextDict, ExcInfo
 from minique.work.job_runner import JobRunner
 
 
@@ -72,7 +72,7 @@ class Worker:
                 self.tick()
             except KeyboardInterrupt:
                 break
-            except Exception:  # noqa
+            except Exception:
                 self.log.error("Unexpected worker tick error", exc_info=True)
 
     def process_exception(
