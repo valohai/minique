@@ -40,7 +40,10 @@ jobs:
         env:
           EXTRA: '${{ matrix.install-extra }}'
       - run: py.test -vvv --cov .
-      - run: 'bash <(curl -s https://codecov.io/bash)'
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: 'Python ${{ matrix.python-version }}'
   Lint:
     runs-on: ubuntu-22.04
     env:
