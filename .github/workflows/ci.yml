@@ -63,7 +63,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - run: pip install -e .[sentry] mypy==0.950
+      - run: pip install -e .[sentry] mypy==1.0.0
       - run: mypy --strict --install-types --non-interactive --show-error-codes minique
   Build:
     runs-on: ubuntu-22.04
