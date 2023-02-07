@@ -2,43 +2,19 @@ minimum_pre_commit_version: 2.15.0
 ci:
   autofix_prs: false
 repos:
-  - repo: https://github.com/PyCQA/flake8
-    rev: 5.0.4
-    hooks:
-      - id: flake8
-        additional_dependencies: &flake8_dependencies
-          - flake8-bugbear==22.10.27
-          - flake8-print==5.0.0
-          - pep8-naming==0.13.2
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
     hooks:
       - id: debug-statements
       - id: end-of-file-fixer
       - id: trailing-whitespace
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.1.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.243
     hooks:
-      - id: pyupgrade
-        args: [ --py37-plus ]
-  - repo: https://github.com/asottile/yesqa
-    rev: v1.4.0
-    hooks:
-      - id: yesqa
-        additional_dependencies: *flake8_dependencies
+      - id: ruff
+        args:
+          - --fix
   - repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
       - id: black
-  - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.4
-    hooks:
-      - id: bandit
-        args:
-          - --quiet
-          - -c
-          - ./bandit.yaml
