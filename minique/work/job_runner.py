@@ -66,7 +66,10 @@ class JobRunner:
         name = self.job.callable_name
         if not self.verify_callable_name(name):
             raise InvalidJob("Invalid job definition")
-        return import_by_string(name)  # type: ignore
+        value = import_by_string(name)
+        if not callable(value):
+            raise InvalidJob("Invalid job function")
+        return value  # type: ignore[no-any-return]
 
     def complete(
         self, success: bool, value: Union[str, bytes], duration: float
@@ -78,7 +81,7 @@ class JobRunner:
         }
         if not self.redis.setnx(self.job.result_redis_key, value):  # pragma: no cover
             raise AlreadyResulted(f"job {self.job.id} already has result")
-        self.redis.hmset(self.job.redis_key, update_payload)  # type: ignore
+        self.redis.hmset(self.job.redis_key, update_payload)  # type: ignore[arg-type]
         # Update expiries to the result TTL for both the job and the result
         self.redis.expire(self.job.result_redis_key, self.job.result_ttl)
         self.redis.expire(self.job.redis_key, self.job.result_ttl)
@@ -93,7 +96,7 @@ class JobRunner:
             self.acquire()
         except Exception as exc:
             self.process_exception(sys.exc_info())
-            raise exc  # could have had an exception in process_exception
+            raise exc  # could have had an exception in process_exception  # noqa: TRY201
         interrupt = False
         success = False
         encoded_value = encoding.encode({"error": "unknown"})

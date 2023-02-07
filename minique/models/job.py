@@ -94,7 +94,7 @@ class Job:
 
     @property
     def status(self) -> JobStatus:
-        return JobStatus(self.redis.hget(self.redis_key, "status").decode())  # type: ignore
+        return JobStatus(self.redis.hget(self.redis_key, "status").decode())  # type: ignore[union-attr]
 
     @property
     def heartbeat(self) -> Optional[float]:
@@ -112,15 +112,15 @@ class Job:
 
     @property
     def result_ttl(self) -> int:
-        return int(self.redis.hget(self.redis_key, "result_ttl"))  # type: ignore
+        return int(self.redis.hget(self.redis_key, "result_ttl"))  # type: ignore[arg-type]
 
     @property
     def duration(self) -> float:
-        return float(self.redis.hget(self.redis_key, "duration"))  # type: ignore
+        return float(self.redis.hget(self.redis_key, "duration"))  # type: ignore[arg-type]
 
     @property
     def queue_name(self) -> str:
-        return self.redis.hget(self.redis_key, "queue").decode()  # type: ignore
+        return self.redis.hget(self.redis_key, "queue").decode()  # type: ignore[union-attr]
 
     @property
     def kwargs(self) -> Dict[str, Any]:
@@ -131,7 +131,7 @@ class Job:
 
     @property
     def callable_name(self) -> str:
-        return self.redis.hget(self.redis_key, "callable").decode()  # type: ignore
+        return self.redis.hget(self.redis_key, "callable").decode()  # type: ignore[union-attr]
 
     @property
     def encoding_name(self) -> str:

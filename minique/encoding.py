@@ -39,15 +39,15 @@ class JSONEncoding(BaseEncoding):
     """
 
     # These can be effortlessly overridden in subclasses
-    dump_kwargs = {
+    dump_kwargs: Dict[str, Any] = {
         "ensure_ascii": False,
         "separators": (",", ":"),
     }
-    load_kwargs = {}  # type: ignore
+    load_kwargs: Dict[str, Any] = {}
     failsafe_default = str
 
     def encode(self, value: Any, failsafe: bool = False) -> Union[str, bytes]:
-        kwargs = self.dump_kwargs.copy()  # type: Dict[str, Any]
+        kwargs = self.dump_kwargs.copy()
         if failsafe:
             kwargs["default"] = self.failsafe_default
         return json.dumps(

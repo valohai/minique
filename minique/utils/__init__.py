@@ -56,7 +56,7 @@ vowels = "aeiou"
 
 
 def get_random_pronounceable_string(length: int = 12) -> str:
-    s = []  # type: List[str]
+    s: List[str] = []
     while length > 0 and len(s) < length:
         s.append(random.choice(consonants))
         s.append(random.choice(vowels) * random.choice((1, 1, 2)))

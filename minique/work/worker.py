@@ -18,7 +18,7 @@ class Worker:
     job_runner_class = JobRunner
 
     # This property may be ignored by subclasses, but it's here for convenience's sake.
-    allowed_callable_patterns = frozenset()  # type: Iterable[str]
+    allowed_callable_patterns: Iterable[str] = frozenset()
 
     def __init__(
         self,
