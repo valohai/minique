@@ -1,3 +1,58 @@
 [build-system]
-requires = ["setuptools>=65"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "minique"
+dynamic = ["version"]
+description = "Minimal Redis job runner"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.7"
+authors = [
+    { name = "Valohai", email = "hait@valohai.com" },
+]
+dependencies = [
+    "redis>=2.10.0",
+]
+
+[project.optional-dependencies]
+sentry = [
+    "sentry_sdk~=1.10",
+]
+test = [
+    "pytest-cov",
+    "pytest>=6",
+]
+
+[project.scripts]
+minique = "minique.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/valohai/minique"
+
+[tool.hatch.version]
+path = "minique/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/minique",
+]
+
+[[tool.mypy.overrides]]
+module = "sentry_sdk.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+norecursedirs = [".git", ".tox"]
+filterwarnings = [
+    "error",
+    "ignore:.*The distutils package.*:DeprecationWarning",
+    "ignore:.*hmset.*deprecated.*:DeprecationWarning",
+    "ignore:.*the imp module is deprecated in favour of importlib.*:DeprecationWarning",
+    "ignore:.*the imp module is deprecated in favour of importlib.*:PendingDeprecationWarning",
+]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
