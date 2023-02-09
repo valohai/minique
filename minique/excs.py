@@ -20,3 +20,7 @@ class AlreadyResulted(InvalidStatus):
 
 class InvalidJob(ValueError):
     pass
+
+
+class MissingJobData(ValueError):
+    pass

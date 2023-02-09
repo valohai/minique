@@ -7,7 +7,13 @@ from redis import Redis
 from minique import encoding
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
 from minique.enums import JobStatus
-from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidStatus, NoSuchJob
+from minique.excs import (
+    AlreadyAcquired,
+    AlreadyResulted,
+    InvalidStatus,
+    NoSuchJob,
+    MissingJobData,
+)
 
 if TYPE_CHECKING:
     from minique.models.queue import Queue
@@ -94,7 +100,10 @@ class Job:
 
     @property
     def status(self) -> JobStatus:
-        return JobStatus(self.redis.hget(self.redis_key, "status").decode())  # type: ignore[union-attr]
+        status = self.redis.hget(self.redis_key, "status")
+        if status is None:
+            raise MissingJobData(f"Job {self.id} has no status")
+        return JobStatus(status.decode())
 
     @property
     def heartbeat(self) -> Optional[float]:
@@ -112,15 +121,24 @@ class Job:
 
     @property
     def result_ttl(self) -> int:
-        return int(self.redis.hget(self.redis_key, "result_ttl"))  # type: ignore[arg-type]
+        result_ttl = self.redis.hget(self.redis_key, "result_ttl")
+        if result_ttl is None:
+            raise MissingJobData(f"Job {self.id} has no result_ttl")
+        return int(result_ttl)
 
     @property
     def duration(self) -> float:
-        return float(self.redis.hget(self.redis_key, "duration"))  # type: ignore[arg-type]
+        duration = self.redis.hget(self.redis_key, "duration")
+        if duration is None:
+            raise MissingJobData(f"Job {self.id} has no duration")
+        return float(duration)
 
     @property
     def queue_name(self) -> str:
-        return self.redis.hget(self.redis_key, "queue").decode()  # type: ignore[union-attr]
+        queue = self.redis.hget(self.redis_key, "queue")
+        if not queue:
+            raise MissingJobData(f"Job {self.id} has no queue")
+        return queue.decode()
 
     @property
     def kwargs(self) -> Dict[str, Any]:
@@ -131,7 +149,10 @@ class Job:
 
     @property
     def callable_name(self) -> str:
-        return self.redis.hget(self.redis_key, "callable").decode()  # type: ignore[union-attr]
+        callable_name = self.redis.hget(self.redis_key, "callable")
+        if not callable_name:
+            raise MissingJobData(f"Job {self.id} has no callable name")
+        return callable_name.decode()
 
     @property
     def encoding_name(self) -> str:
