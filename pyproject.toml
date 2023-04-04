@@ -48,7 +48,6 @@ norecursedirs = [".git", ".tox"]
 filterwarnings = [
     "error",
     "ignore:.*The distutils package.*:DeprecationWarning",
-    "ignore:.*hmset.*deprecated.*:DeprecationWarning",
     "ignore:.*the imp module is deprecated in favour of importlib.*:DeprecationWarning",
     "ignore:.*the imp module is deprecated in favour of importlib.*:PendingDeprecationWarning",
 ]
