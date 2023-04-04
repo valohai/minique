@@ -81,7 +81,10 @@ class JobRunner:
         }
         if not self.redis.setnx(self.job.result_redis_key, value):  # pragma: no cover
             raise AlreadyResulted(f"job {self.job.id} already has result")
-        self.redis.hmset(self.job.redis_key, update_payload)  # type: ignore[arg-type]
+        self.redis.hset(
+            self.job.redis_key,
+            mapping=update_payload,  # type: ignore[arg-type]
+        )
         # Update expiries to the result TTL for both the job and the result
         self.redis.expire(self.job.result_redis_key, self.job.result_ttl)
         self.redis.expire(self.job.redis_key, self.job.result_ttl)

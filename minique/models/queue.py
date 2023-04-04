@@ -33,7 +33,7 @@ class Queue:
     def enqueue_initial(self, job: "Job", payload: dict) -> None:  # type: ignore[type-arg]
         assert payload["queue"] == self.name
         with self.redis.pipeline() as p:
-            p.hmset(job.redis_key, payload)
+            p.hset(job.redis_key, mapping=payload)
             if payload["job_ttl"] > 0:
                 p.expire(job.redis_key, payload["job_ttl"])
             p.rpush(self.redis_key, job.id)
