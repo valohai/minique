@@ -10,6 +10,9 @@ on:
     branches:
       - master
 
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+
 jobs:
 
   Test:
@@ -32,7 +35,6 @@ jobs:
     env:
       REDIS_URL: 'redis://localhost:6379/0'
       SENTRY_DSN: 'http://user:pass@localhost:12340/foo'
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@v2
       - name: 'Set up Python ${{ matrix.python-version }}'
@@ -50,8 +52,6 @@ jobs:
 
   Lint:
     runs-on: ubuntu-22.04
-    env:
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
@@ -61,8 +61,6 @@ jobs:
 
   Mypy:
     runs-on: ubuntu-22.04
-    env:
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
@@ -74,8 +72,6 @@ jobs:
   Build:
     runs-on: ubuntu-22.04
     needs: [ Lint, Mypy, Test ]
-    env:
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
