@@ -16,9 +16,22 @@ def check_sentry_event_calls(sentry_event_calls, num_expected: int):
     # Check that an error got recorded, if Sentry is enabled
     if sentry_event_calls is not None:
         assert len(sentry_event_calls) == num_expected
-        assert any(  # pragma: no cover
-            call.args[0]["level"] == "error" for call in sentry_event_calls
+
+        error_in_kwargs = any(
+            call.kwargs.get("event", {}).get("level") == "error"
+            for call in sentry_event_calls
         )
+        if error_in_kwargs:
+            return
+
+        error_in_args = any(
+            call.args and call.args[0]["level"] == "error"
+            for call in sentry_event_calls
+        )
+        if error_in_args:
+            return
+
+        raise AssertionError("No `error` level event recorded in Sentry")
 
 
 def test_unjsonable_arg(redis: Redis, random_queue_name: str):

@@ -1,5 +1,6 @@
 name: CI
-'on':
+
+on:
   push:
     branches:
       - master
@@ -8,7 +9,12 @@ name: CI
   pull_request:
     branches:
       - master
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+
 jobs:
+
   Test:
     runs-on: ubuntu-22.04
     strategy:
@@ -19,7 +25,8 @@ jobs:
           - python-version: '3.9'
           - python-version: '3.10'
           - python-version: '3.11'
-          - python-version: '3.11'
+          - python-version: '3.12'
+          - python-version: '3.12'
             install-extra: '[sentry]'
     services:
       redis:
@@ -29,7 +36,6 @@ jobs:
     env:
       REDIS_URL: 'redis://localhost:6379/0'
       SENTRY_DSN: 'http://user:pass@localhost:12340/foo'
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@v2
       - name: 'Set up Python ${{ matrix.python-version }}'
@@ -44,37 +50,34 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: 'Python ${{ matrix.python-version }}'
+
   Lint:
     runs-on: ubuntu-22.04
-    env:
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - uses: pre-commit/action@v3.0.0
+
   Mypy:
     runs-on: ubuntu-22.04
-    env:
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-      - run: pip install -e .[sentry] mypy==1.0.0
+          python-version: '3.12'
+      - run: pip install -e .[sentry] mypy==1.0.0 types-redis
       - run: mypy --strict --install-types --non-interactive --show-error-codes minique
+
   Build:
     runs-on: ubuntu-22.04
     needs: [ Lint, Mypy, Test ]
-    env:
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - run: pip install build twine
       - run: python -m build .
       - run: twine check dist/*
