@@ -1,4 +1,5 @@
 name: CI
+
 'on':
   push:
     branches:
@@ -8,7 +9,9 @@ name: CI
   pull_request:
     branches:
       - master
+
 jobs:
+
   Test:
     runs-on: ubuntu-22.04
     strategy:
@@ -44,6 +47,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: 'Python ${{ matrix.python-version }}'
+
   Lint:
     runs-on: ubuntu-22.04
     env:
@@ -54,6 +58,7 @@ jobs:
         with:
           python-version: '3.11'
       - uses: pre-commit/action@v3.0.0
+
   Mypy:
     runs-on: ubuntu-22.04
     env:
@@ -65,6 +70,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -e .[sentry] mypy==1.0.0
       - run: mypy --strict --install-types --non-interactive --show-error-codes minique
+
   Build:
     runs-on: ubuntu-22.04
     needs: [ Lint, Mypy, Test ]
