@@ -54,8 +54,13 @@ filterwarnings = [
 
 [tool.ruff]
 target-version = "py37"
-ignore = ["E501"]
 line-length = 88
+
+[tool.ruff.lint]
+mccabe.max-complexity = 10
+ignore = [
+    "E501",
+]
 select = [
     "B",
     "C9",
@@ -67,8 +72,5 @@ select = [
     "W",
 ]
 
-[tool.ruff.mccabe]
-max-complexity = 10
-
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "minique_tests/**" = ["T2"]

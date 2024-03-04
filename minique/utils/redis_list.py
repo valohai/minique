@@ -8,7 +8,7 @@ def read_list(
     key: str,
     *,
     chunk_size: int = 4096,
-    last_n: Optional[int] = None
+    last_n: Optional[int] = None,
 ) -> Iterable[bytes]:
     """
     Read a possibly large Redis list in chunks.

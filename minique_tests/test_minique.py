@@ -5,6 +5,7 @@ from redis.client import Redis
 
 from minique.api import cancel_job, enqueue, get_job
 from minique.enums import JobStatus
+from minique.excs import InvalidStatus
 from minique.models.queue import Queue
 from minique.testing import run_synchronously
 from minique_tests.jobs import (
@@ -92,5 +93,5 @@ def test_ensure_enqueued(redis: Redis, random_queue_name: str) -> None:
     TestWorker.for_queue_names(redis, queue.name).tick()
     assert queue.length == 0
     for job in (j1, j2):
-        with pytest.raises(Exception):  # Refuses to be enqueued after completion
+        with pytest.raises(InvalidStatus):  # Refuses to be enqueued after completion
             job.ensure_enqueued()
