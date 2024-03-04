@@ -63,25 +63,24 @@ def cancel_job(
     Cancel the job with the given job ID.
 
     If a worker is already busy with the job, it may not immediately quit,
-    and as such, the job is not set to cancelled state.
+    and as such, the job is not set to canceled state.
 
-    You can optionally specify an expire time for the job object; this overrides
+    You can optionally specify an expiration time for the job object; this overrides
     any `job_ttl` set in the job payload itself.  The assumption is that you don't
     need a canceled job object to hang around forever.
 
     :param redis: Redis connection
     :param job_id: Job ID.
     :param expire_time: Expiration time for the job object in seconds.
-    :raises minique.excs.NoSuchJob: if the job does not exist.
+    :raises minique.excs.NoSuchJob: If the job does not exist.
     """
     job = get_job(redis, job_id)
     if not (job.has_finished or job.has_started):
         with redis.pipeline() as p:
-            # Cancel the job and remove it from the queue it may be in.
-            redis.hset(job.redis_key, "status", JobStatus.CANCELLED.value)
-            redis.lrem(job.get_queue().redis_key, 0, job.id)
+            p.hset(job.redis_key, "status", JobStatus.CANCELLED.value)
+            p.lrem(job.get_queue().redis_key, 0, job.id)
             if expire_time:
-                redis.expire(job.redis_key, expire_time)
+                p.expire(job.redis_key, expire_time)
             p.execute()
         return True
     return False
