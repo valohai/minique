@@ -49,6 +49,13 @@ class Job:
             raise InvalidStatus(f"Job {self.id} has status {status}, will not enqueue")
         return self.get_queue().ensure_enqueued(self)
 
+    def dequeue(self) -> bool:
+        """
+        Remove the job from the queue without changing its status.
+        """
+        num_removed = self.redis.lrem(self.get_queue().redis_key, 0, self.id)
+        return num_removed > 0
+
     @property
     def redis_key(self) -> str:
         return f"{JOB_KEY_PREFIX}{self.id}"
