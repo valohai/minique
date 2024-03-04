@@ -25,7 +25,8 @@ jobs:
           - python-version: '3.9'
           - python-version: '3.10'
           - python-version: '3.11'
-          - python-version: '3.11'
+          - python-version: '3.12'
+          - python-version: '3.12'
             install-extra: '[sentry]'
     services:
       redis:
@@ -56,7 +57,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - uses: pre-commit/action@v3.0.0
 
   Mypy:
@@ -65,7 +66,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - run: pip install -e .[sentry] mypy==1.0.0
       - run: mypy --strict --install-types --non-interactive --show-error-codes minique
 
@@ -76,7 +77,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - run: pip install build twine
       - run: python -m build .
       - run: twine check dist/*
