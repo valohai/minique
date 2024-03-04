@@ -69,8 +69,19 @@ describing the job ID and queue name.
 
 ### Development
 
-* Linting happens with `pre-commit`.
-* Tests are run with `pytest`. (Install with `pip install -e .[test]`.)
-* Code in `minique` is expected to pass `mypy --strict`.
+```shell
+# install `minique` in editable mode with development dependencies
+pip install -e .[sentry,test] pre-commit mypy==1.0.0 types-redis && pre-commit install
+
+# run lints
+pre-commit run --all-files
+
+# run type checks
+mypy --strict --install-types --show-error-codes minique
+
+# run tests against the specified Redis database
+REDIS_URL=redis://localhost:6379/0 pytest .
+```
+
 
 [extras]: https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras
