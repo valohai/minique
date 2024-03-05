@@ -21,17 +21,34 @@ def enqueue(
     result_ttl: int = 86400 * 7,
     encoding_name: Optional[str] = None,
 ) -> Job:
+    """
+    Queue up callable as a job.
+
+    :param redis: Redis connection
+    :param queue_name: Name of the queue to enqueue the job in.
+    :param callable: A dotted path to the callable to execute on the worker.
+    :param kwargs: Keyword arguments to pass to the callable.
+    :param job_id: An identifier for the job; defaults to a random string.
+    :param job_ttl: Time-to-live for the job in seconds; defaults to never expire.
+    :param result_ttl: Time-to-live for the result in seconds; defaults to 7 days.
+    :param encoding_name: Name of the encoding to use for the job payload; defaults to JSON.
+    :raises minique.excs.DuplicateJob: If a job with the same ID already exists.
+    :raises minique.excs.NoSuchJob: If the job does not exist right after creation.
+    """
     if not encoding_name:
         encoding_name = encoding.default_encoding_name
     encoder = encoding.registry[str(encoding_name)]()
+
     if not isinstance(callable, str):
         callable = f"{callable.__module__}.{callable.__qualname__}"
 
     if not job_id:
         job_id = get_random_pronounceable_string()
+
     job = Job(redis, job_id)
     if job.exists:
         raise DuplicateJob(f"duplicate job: {job_id}")
+
     payload = {
         "queue": queue_name,
         "callable": str(callable),
