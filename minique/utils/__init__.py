@@ -4,6 +4,7 @@ from importlib import import_module
 from threading import local
 from typing import TYPE_CHECKING, Any, Callable, Iterator, List, Optional
 
+
 if TYPE_CHECKING:
     from minique.models.job import Job
 
