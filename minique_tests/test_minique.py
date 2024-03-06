@@ -3,9 +3,9 @@ import threading
 import pytest
 from redis.client import Redis
 
-from minique.api import cancel_job, enqueue, get_job
+from minique.api import cancel_job, enqueue, get_job, store
 from minique.enums import JobStatus
-from minique.excs import InvalidStatus
+from minique.excs import InvalidStatus, MissingJobData
 from minique.models.queue import Queue
 from minique.testing import run_synchronously
 from minique_tests.jobs import (
@@ -119,3 +119,11 @@ def test_get_job_dequeue(redis: Redis, random_queue_name: str) -> None:
     assert not r_j2.dequeue()
     assert queue.length == 1
     assert get_job(redis, j3.id) == j3
+
+
+def test_stored_jobs(redis: Redis, random_queue_name: str) -> None:
+    job = store(redis, reverse_job_id)
+    with pytest.raises(MissingJobData, match="has no queue"):
+        _ = job.queue_name
+    r_job = get_job(redis, job.id)
+    assert r_job == job

@@ -30,15 +30,6 @@ class Queue:
         """
         return self.redis.delete(self.redis_key)
 
-    def enqueue_initial(self, job: "Job", payload: dict) -> None:  # type: ignore[type-arg]
-        assert payload["queue"] == self.name
-        with self.redis.pipeline() as p:
-            p.hset(job.redis_key, mapping=payload)
-            if payload["job_ttl"] > 0:
-                p.expire(job.redis_key, payload["job_ttl"])
-            p.rpush(self.redis_key, job.id)
-            p.execute()
-
     def get_queue_index(self, job: "Job") -> Optional[int]:
         # TODO: use `LPOS` (https://redis.io/commands/lpos/) when available for this
         job_id_bytes = str(job.id).encode()
