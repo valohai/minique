@@ -95,3 +95,27 @@ def test_ensure_enqueued(redis: Redis, random_queue_name: str) -> None:
     for job in (j1, j2):
         with pytest.raises(InvalidStatus):  # Refuses to be enqueued after completion
             job.ensure_enqueued()
+
+
+def test_get_job_dequeue(redis: Redis, random_queue_name: str) -> None:
+    j1 = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
+    j2 = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
+    j3 = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
+    queue = Queue(redis, random_queue_name)
+    assert queue.length == 3
+
+    # dequeue on initial job
+    assert j1.dequeue()
+    assert queue.length == 2
+
+    # dequeue on a fetched job
+    r_j2 = get_job(redis, j2.id)
+    assert r_j2 == j2
+    assert r_j2.dequeue()
+    assert queue.length == 1
+
+    # dequeue returns False if nothing is removed
+    assert not j1.dequeue()
+    assert not r_j2.dequeue()
+    assert queue.length == 1
+    assert get_job(redis, j3.id) == j3

@@ -48,7 +48,10 @@ def enqueue(
     return job
 
 
-def get_job(redis: "Redis[bytes]", job_id: str) -> Job:
+def get_job(
+    redis: "Redis[bytes]",
+    job_id: str,
+) -> Job:
     job = Job(redis, job_id)
     job.ensure_exists()
     return job
