@@ -43,8 +43,8 @@ job = get_job(redis, job_id)
 
 - Ensure your workers are able to import the functions you wish to run.
 - Set the callables the worker will allow with `--allow-callable`.
-  - Alternately, you may wish to subclass `minique.work.job_runner.JobRunner`
-    to specify an entirely different lookup mechanism.
+    - Alternately, you may wish to subclass `minique.work.job_runner.JobRunner`
+      to specify an entirely different lookup mechanism.
 
 ```bash
 $ minique -u redis://localhost:6379/4 -q work -q anotherqueue -q thirdqueue --allow-callable 'my_jobs.*'
@@ -64,8 +64,8 @@ you should see a "Sentry configured with a valid DSN" message at CLI boot.
 The [other environment-configurable options](https://docs.sentry.io/platforms/python/configuration/options/)
 also work as you would expect.
 
-Exceptions occurring during job execution will be sent to Sentry and annotated with `minique` context
-describing the job ID and queue name.
+Exceptions occurring during job execution will be sent to Sentry and annotated with `minique`
+context describing the job ID and queue name.
 
 ### Development
 
@@ -83,5 +83,22 @@ mypy --strict --install-types --show-error-codes minique
 REDIS_URL=redis://localhost:6379/0 pytest .
 ```
 
+### Release
+
+```shell
+# decide on a new version number and set it
+vim minique/__init__.py
+__version__ = "0.9.0"
+
+npx auto-changelog --commit-limit=0 -v 0.9.0
+
+# undo changes changelog generation did to the older entries
+
+git add -u
+git commit -m "Become 0.9.0"
+git tag -m "v0.9.0" -a v0.9.0
+
+git push --follow-tags
+```
 
 [extras]: https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras
