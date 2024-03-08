@@ -114,7 +114,10 @@ def cancel_job(
     if not (job.has_finished or job.has_started):
         with redis.pipeline() as p:
             p.hset(job.redis_key, "status", JobStatus.CANCELLED.value)
-            p.lrem(job.get_queue().redis_key, 0, job.id)
+            queue_name = job.get_queue_name()
+            if queue_name:
+                queue = Queue(redis, name=queue_name)
+                p.lrem(queue.redis_key, 0, job.id)
             if expire_time:
                 p.expire(job.redis_key, expire_time)
             p.execute()

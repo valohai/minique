@@ -127,3 +127,10 @@ def test_stored_jobs(redis: Redis, random_queue_name: str) -> None:
         _ = job.queue_name
     r_job = get_job(redis, job.id)
     assert r_job == job
+
+
+def test_stored_job_cancel(redis: Redis, random_queue_name: str) -> None:
+    job = store(redis, reverse_job_id)
+    assert get_job(redis, job.id).status == JobStatus.NONE
+    assert cancel_job(redis, job.id)
+    assert get_job(redis, job.id).status == JobStatus.CANCELLED
