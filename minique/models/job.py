@@ -142,8 +142,13 @@ class Job:
 
     @property
     def queue_name(self) -> str:
+        return self.get_queue_name(missing_ok=False)  # type:ignore[return-value]
+
+    def get_queue_name(self, *, missing_ok=True) -> Optional[str]:
         queue = self.redis.hget(self.redis_key, "queue")
         if not queue:
+            if missing_ok:
+                return None
             raise MissingJobData(f"Job {self.id} has no queue")
         return queue.decode()
 
