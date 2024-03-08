@@ -144,7 +144,7 @@ class Job:
     def queue_name(self) -> str:
         return self.get_queue_name(missing_ok=False)  # type:ignore[return-value]
 
-    def get_queue_name(self, *, missing_ok=True) -> Optional[str]:
+    def get_queue_name(self, *, missing_ok: bool = True) -> Optional[str]:
         queue = self.redis.hget(self.redis_key, "queue")
         if not queue:
             if missing_ok:
