@@ -149,12 +149,10 @@ class JobRunner:
 
     def process_exception(self, excinfo: ExcInfo) -> None:
         try:
-            self.worker.process_exception(
-                excinfo,
-                context={
-                    "id": str(self.job.id),
-                    "queue": str(self.job.queue_name),
-                },
-            )
+            context = {"id": str(self.job.id)}
+            queue_name = self.job.get_queue_name()
+            if queue_name:
+                context["queue"] = queue_name
+            self.worker.process_exception(excinfo, context=context)
         except Exception:
             self.log.warning("error running process_exception()", exc_info=True)
