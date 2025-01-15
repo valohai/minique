@@ -58,8 +58,21 @@ class Queue:
 
         index = self.get_queue_index(job)
         if index is None:
-            # RPUSH: Integer reply: the length of the list after the push operation.
-            index = self.redis.rpush(self.redis_key, job.id) - 1
-            return (True, index)
+            index = self.add_job(job)
+            return True, index
 
-        return (False, index)
+        return False, index
+
+    def add_job(self, job: "Job") -> int:
+        """Add a job to the queue in the appropriate position for its priority.
+
+        :param job: The Job object to be added.
+
+        :return: index position of the job in the queue
+        """
+        return self.redis.rpush(self.redis_key, job.id) - 1
+
+    def dequeue_job(self, job_id: str) -> bool:
+        """Dequeue the job with the given job ID"""
+        num_removed = self.redis.lrem(self.redis_key, 0, job_id)
+        return num_removed > 0

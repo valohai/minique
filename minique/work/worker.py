@@ -50,7 +50,7 @@ class Worker:
 
     def get_next_job(self) -> Optional[Job]:
         rv = self.redis.blpop([q.redis_key for q in self.queues], self.queue_timeout)
-        if rv:  # The rv is a 2-tuple (queue name, value)
+        if rv:  # 2-tuple of queue_key, job_id
             job_id = rv[1].decode()
             return Job(self.redis, job_id)
         return None

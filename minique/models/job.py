@@ -1,6 +1,6 @@
 import json
 import time
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Union
 
 from redis import Redis
 
@@ -14,9 +14,12 @@ from minique.excs import (
     NoSuchJob,
     MissingJobData,
 )
+from minique.utils import cached_property
+
 
 if TYPE_CHECKING:
     from minique.models.queue import Queue
+    from minique.models.priority_queue import PriorityQueue
 
 
 class Job:
@@ -47,14 +50,23 @@ class Job:
         status = self.status
         if status in (JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.CANCELLED):
             raise InvalidStatus(f"Job {self.id} has status {status}, will not enqueue")
+
         return self.get_queue().ensure_enqueued(self)
 
     def dequeue(self) -> bool:
         """
         Remove the job from the queue without changing its status.
         """
-        num_removed = self.redis.lrem(self.get_queue().redis_key, 0, self.id)
-        return num_removed > 0
+        return self.get_queue().dequeue_job(self.id)
+
+    def cleanup(self) -> bool:
+        if self.has_priority:
+            queue = self.get_queue()
+            if hasattr(queue, "clean_job"):  # avoids import
+                queue.clean_job(self)
+                return True
+
+        return False
 
     @property
     def redis_key(self) -> str:
@@ -74,7 +86,10 @@ class Job:
 
     @property
     def has_finished(self) -> int:
-        return self.redis.exists(self.result_redis_key)
+        has_result = self.redis.exists(self.result_redis_key)
+        if has_result:
+            self.cleanup()
+        return has_result
 
     @property
     def has_started(self) -> bool:
@@ -88,6 +103,7 @@ class Job:
     def result(self) -> Optional[Any]:
         result_data = self.encoded_result
         if result_data is not None:
+            self.cleanup()
             return self.get_encoding().decode(result_data)
         return None
 
@@ -140,6 +156,21 @@ class Job:
             raise MissingJobData(f"Job {self.id} has no duration")
         return float(duration)
 
+    @cached_property
+    def has_priority(self) -> bool:
+        return self.redis.hget(self.redis_key, "priority") is not None
+
+    @property
+    def priority(self) -> int:
+        priority = self.redis.hget(self.redis_key, "priority")
+        if priority is None:
+            raise MissingJobData(f"Job {self.id} has no priority")
+        return int(priority)
+
+    @priority.setter
+    def priority(self, new_priority: int) -> None:
+        self.redis.hset(self.redis_key, "priority", new_priority)
+
     @property
     def queue_name(self) -> str:
         return self.get_queue_name(missing_ok=False)  # type:ignore[return-value]
@@ -178,9 +209,12 @@ class Job:
     def get_encoding(self) -> encoding.BaseEncoding:
         return encoding.registry[self.encoding_name]()
 
-    def get_queue(self) -> "Queue":
+    def get_queue(self) -> "Union[Queue, PriorityQueue]":
         from minique.models.queue import Queue
+        from minique.models.priority_queue import PriorityQueue
 
+        if self.has_priority:
+            return PriorityQueue(redis=self.redis, name=self.queue_name)
         return Queue(redis=self.redis, name=self.queue_name)
 
     def set_meta(self, meta: Any) -> None:
