@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Callable
 
 from redis import Redis
 
@@ -8,6 +8,7 @@ def read_list(
     key: str,
     *,
     chunk_size: int = 4096,
+    filter_fn: Optional[Callable[[bytes], bool]] = None,
     last_n: Optional[int] = None,
 ) -> Iterable[bytes]:
     """
@@ -18,7 +19,8 @@ def read_list(
     :param redis_conn: Redis connection
     :param key: Key
     :param chunk_size: How many lines to read per request.
-    :param last_n: Attempt to only read the last N lines.
+    :param filter_fn: Only include lines that pass this filter
+    :param last_n: How many last lines to return, filtering is applied before limiting.
     :return:
     """
     # LLEN returns zero for a non-existent key,
@@ -31,17 +33,30 @@ def read_list(
     if chunk_size <= 0:
         chunk_size = 4096
 
-    if last_n and last_n > 0:
-        offset = max(0, list_len - last_n)
-    else:
-        offset = 0
+    results = []
 
-    while offset < list_len:
-        # Regarding that - 1 there, see this from https://redis.io/commands/lrange:
-        # > Note that if you have a list of numbers from 0 to 100, LRANGE list 0 10
-        # > will return 11 elements, that is, the rightmost item is included.
-        chunk = redis_conn.lrange(key, offset, offset + chunk_size - 1) or []
+    # Regarding that - 1 there, see this from https://redis.io/commands/lrange:
+    # > Note that if you have a list of numbers from 0 to 100, LRANGE list 0 10
+    # > will return 11 elements, that is, the rightmost item is included.
+    end_index = list_len - 1
+    remaining_needed = last_n if last_n and last_n > 0 else list_len
+
+    # read until we have enough items, or we run out of the list
+    while end_index >= 0 and remaining_needed > 0:
+        start_index = max(0, end_index - chunk_size + 1)
+
+        chunk = redis_conn.lrange(key, start_index, end_index)
         if not chunk:
             break
-        yield from chunk
-        offset += chunk_size
+
+        for item in reversed(chunk):
+            if not filter_fn or filter_fn(item):
+                results.append(item)
+                remaining_needed -= 1
+                if remaining_needed == 0:
+                    break
+
+        # move the reading window further back
+        end_index = start_index - 1
+
+    yield from reversed(results)
