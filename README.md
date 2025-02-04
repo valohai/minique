@@ -50,6 +50,48 @@ job = get_job(redis, job_id)
 $ minique -u redis://localhost:6379/4 -q work -q anotherqueue -q thirdqueue --allow-callable 'my_jobs.*'
 ```
 
+### Priority Queues
+
+Minique supports priority queueing as an optional feature using the `enqueue_priority` API.
+
+Priority queues are compatible with standard workers. However, priority is implemented using a
+helper data structure, requiring the client needs to call `job.cleanup()` after each job and/or
+`PriorityQueue(...).periodic_clean()` to prune this structure of jobs that have already been
+processed.
+
+Priority queue requires Lua scripting permissions from the Redis queue service.
+
+```python
+from redis import StrictRedis
+from minique.api import enqueue_priority, get_job
+
+# Get a Redis connection, somehow.
+redis = StrictRedis.from_url('redis://localhost:6379/4')
+
+job = enqueue_priority(
+    redis=redis,
+    queue_name='urgent_work',
+    callable='my_jobs.calcumacalate',  # Dotted path to your callable.
+    kwargs={'a': 5, 'b': 5},  # Only kwargs supported.
+    priority=1,  # Integer
+    # You can also set a `job_id` yourself (but it must be unique)
+)
+
+job_id = job.id  # Save the job ID somewhere, maybe?
+
+while not job.has_finished:
+    pass  # Twiddle thumbs...
+
+print(job.result)  # Okay!
+
+# Job priorities are stored in a helper hash table which should be cleaned using this method
+# after the job has left the queue.
+job.cleanup()
+
+# Get the same job later (though not later than 7 days (by default)):
+job = get_job(redis, job_id)
+```
+
 ## Sentry Support
 
 Minique automatically integrates with the [Sentry](https://sentry.io/welcome/)

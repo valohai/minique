@@ -24,3 +24,7 @@ class InvalidJob(ValueError):
 
 class MissingJobData(ValueError):
     pass
+
+
+class Retry(Exception):
+    pass

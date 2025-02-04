@@ -129,6 +129,15 @@ def test_stored_jobs(redis: Redis, random_queue_name: str) -> None:
     assert r_job == job
 
 
+def test_dequeue_stored_job(redis: Redis):
+    stored_job = store(
+        redis,
+        "minique_tests.jobs.sum_positive_values",
+    )
+    with pytest.raises(MissingJobData, match="has no queue"):
+        stored_job.dequeue()
+
+
 def test_stored_job_cancel(redis: Redis, random_queue_name: str) -> None:
     job = store(redis, reverse_job_id)
     assert get_job(redis, job.id).status == JobStatus.NONE
