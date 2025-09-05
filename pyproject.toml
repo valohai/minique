@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Minimal Redis job runner"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     { name = "Valohai", email = "hait@valohai.com" },
 ]
