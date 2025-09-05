@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 import logging
-
-from redis import StrictRedis
+from typing import TYPE_CHECKING
 
 from minique.compat import sentry_sdk
 from minique.work.worker import Worker
+
+if TYPE_CHECKING:
+    from minique.types import RedisClient
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -18,11 +20,22 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def get_redis(url: str) -> RedisClient:
+    try:
+        from valkey import Valkey
+
+        return Valkey.from_url(url)  # type: ignore[return-value]
+    except ImportError:
+        from redis import Redis
+
+        return Redis.from_url(url)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = get_parser()
     args = parser.parse_args(argv)
     logging.basicConfig(datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
-    redis = StrictRedis.from_url(args.redis_url)
+    redis = get_redis(args.redis_url)
     worker = Worker.for_queue_names(redis=redis, queue_names=args.queues)
     worker.allowed_callable_patterns = set(args.allow_callable)
     worker.log.info("Worker initialized")

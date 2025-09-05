@@ -18,10 +18,9 @@ from minique.excs import (
 from minique.utils import cached_property
 
 if TYPE_CHECKING:
-    from redis import Redis
-
     from minique.models.priority_queue import PriorityQueue
     from minique.models.queue import Queue
+    from minique.types import RedisClient
 
 
 class Job:
@@ -29,7 +28,7 @@ class Job:
     replacement_callable: Callable[..., Any] | None = None
     replacement_kwargs: dict[str, Any] | None = None
 
-    def __init__(self, redis: Redis[bytes], id: str) -> None:
+    def __init__(self, redis: RedisClient, id: str) -> None:
         self.redis = redis
         self.id = str(id)
 

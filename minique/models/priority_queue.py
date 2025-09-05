@@ -5,9 +5,8 @@ from typing import TYPE_CHECKING
 from minique.models.queue import Queue
 
 if TYPE_CHECKING:
-    from redis import Redis
-
     from minique.models.job import Job
+    from minique.types import RedisClient
 
 
 ADD_JOB_SCRIPT = """
@@ -100,7 +99,7 @@ class PriorityQueue(Queue):
     remove stale keys from the priority lookup hash.
     """
 
-    def __init__(self, redis: Redis[bytes], name: str):
+    def __init__(self, redis: RedisClient, name: str):
         super().__init__(redis, name)
         self.add_job_script = redis.register_script(ADD_JOB_SCRIPT)
         self.hash_clean_script = redis.register_script(PRIO_HASH_CLEANER_SCRIPT)

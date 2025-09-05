@@ -8,13 +8,12 @@ from minique.utils import cached_property
 from minique.utils.redis_list import read_list
 
 if TYPE_CHECKING:
-    from redis import Redis
-
     from minique.models.job import Job
+    from minique.types import RedisClient
 
 
 class Queue:
-    def __init__(self, redis: Redis[bytes], name: str) -> None:
+    def __init__(self, redis: RedisClient, name: str) -> None:
         self.redis = redis
         self.name = str(name)
 

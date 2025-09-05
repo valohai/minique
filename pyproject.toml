@@ -12,11 +12,14 @@ requires-python = ">=3.10"
 authors = [
     { name = "Valohai", email = "hait@valohai.com" },
 ]
-dependencies = [
-    "redis>=2.10.0",
-]
 
 [project.optional-dependencies]
+redis = [
+    "redis>=2.10.0",
+]
+valkey = [
+    "valkey>=6.0.0",
+]
 sentry = [
     "sentry-sdk~=2.36",
 ]
