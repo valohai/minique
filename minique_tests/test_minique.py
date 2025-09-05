@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import threading
+from typing import TYPE_CHECKING
 
 import pytest
-from redis.client import Redis
 
 from minique.api import cancel_job, enqueue, get_job, store
 from minique.enums import JobStatus
@@ -16,9 +18,12 @@ from minique_tests.jobs import (
 )
 from minique_tests.worker import TestWorker
 
+if TYPE_CHECKING:
+    from minique.types import RedisClient
+
 
 @pytest.mark.parametrize("success", (False, True))
-def test_basics(redis: Redis, success: bool, random_queue_name: str) -> None:
+def test_basics(redis: RedisClient, success: bool, random_queue_name: str) -> None:
     kwargs = {"a": 10, "b": (15 if success else 0)}
     job = enqueue(
         redis, random_queue_name, "minique_tests.jobs.sum_positive_values", kwargs
@@ -40,18 +45,18 @@ def test_basics(redis: Redis, success: bool, random_queue_name: str) -> None:
             assert job.status == JobStatus.FAILED
 
 
-def test_worker_empty_queue(redis: Redis, random_queue_name: str) -> None:
+def test_worker_empty_queue(redis: RedisClient, random_queue_name: str) -> None:
     worker = TestWorker.for_queue_names(redis, random_queue_name)
     assert not worker.tick()
 
 
-def test_job_object_access(redis: Redis, random_queue_name: str) -> None:
+def test_job_object_access(redis: RedisClient, random_queue_name: str) -> None:
     job = enqueue(redis, random_queue_name, reverse_job_id)
     run_synchronously(job)
     assert job.result == job.id[::-1]
 
 
-def test_job_message(redis: Redis, random_queue_name: str) -> None:
+def test_job_message(redis: RedisClient, random_queue_name: str) -> None:
     job = enqueue(redis, random_queue_name, job_with_a_message)
     worker_thread = threading.Thread(target=run_synchronously, args=(job,))
     worker_thread.start()
@@ -67,7 +72,7 @@ def test_job_message(redis: Redis, random_queue_name: str) -> None:
     assert job.result == 42
 
 
-def test_cancel(redis: Redis, random_queue_name: str) -> None:
+def test_cancel(redis: RedisClient, random_queue_name: str) -> None:
     job = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     assert Queue(redis, random_queue_name).length == 1
     cancel_job(redis, job.id)
@@ -76,7 +81,7 @@ def test_cancel(redis: Redis, random_queue_name: str) -> None:
     TestWorker.for_queue_names(redis, random_queue_name).tick()
 
 
-def test_ensure_enqueued(redis: Redis, random_queue_name: str) -> None:
+def test_ensure_enqueued(redis: RedisClient, random_queue_name: str) -> None:
     j1 = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     j2 = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     queue = j1.get_queue()
@@ -97,7 +102,7 @@ def test_ensure_enqueued(redis: Redis, random_queue_name: str) -> None:
             job.ensure_enqueued()
 
 
-def test_get_job_dequeue(redis: Redis, random_queue_name: str) -> None:
+def test_get_job_dequeue(redis: RedisClient, random_queue_name: str) -> None:
     j1 = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     j2 = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     j3 = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
@@ -121,7 +126,7 @@ def test_get_job_dequeue(redis: Redis, random_queue_name: str) -> None:
     assert get_job(redis, j3.id) == j3
 
 
-def test_stored_jobs(redis: Redis, random_queue_name: str) -> None:
+def test_stored_jobs(redis: RedisClient, random_queue_name: str) -> None:
     job = store(redis, reverse_job_id)
     with pytest.raises(MissingJobData, match="has no queue"):
         _ = job.queue_name
@@ -129,7 +134,7 @@ def test_stored_jobs(redis: Redis, random_queue_name: str) -> None:
     assert r_job == job
 
 
-def test_dequeue_stored_job(redis: Redis):
+def test_dequeue_stored_job(redis: RedisClient):
     stored_job = store(
         redis,
         "minique_tests.jobs.sum_positive_values",
@@ -138,7 +143,7 @@ def test_dequeue_stored_job(redis: Redis):
         stored_job.dequeue()
 
 
-def test_stored_job_cancel(redis: Redis, random_queue_name: str) -> None:
+def test_stored_job_cancel(redis: RedisClient, random_queue_name: str) -> None:
     job = store(redis, reverse_job_id)
     assert get_job(redis, job.id).status == JobStatus.NONE
     assert cancel_job(redis, job.id)

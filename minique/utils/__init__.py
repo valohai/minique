@@ -1,9 +1,9 @@
 import random
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from importlib import import_module
 from threading import local
-from typing import TYPE_CHECKING, Any, Callable, Iterator, List, Optional
-
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from minique.models.job import Job
@@ -57,7 +57,7 @@ vowels = "aeiou"
 
 
 def get_random_pronounceable_string(length: int = 12) -> str:
-    s: List[str] = []
+    s: list[str] = []
     while length > 0 and len(s) < length:
         s.append(random.choice(consonants))
         s.append(random.choice(vowels) * random.choice((1, 1, 2)))

@@ -1,11 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
-from redis import Redis
 
 from minique.api import enqueue
 from minique.encoding import JSONEncoding, register_encoding
 from minique.testing import run_synchronously
 from minique.work.job_runner import JobRunner
 from minique_tests.worker import TestWorker
+
+if TYPE_CHECKING:
+    from minique.types import RedisClient
 
 
 def special_dump(o):
@@ -40,7 +46,7 @@ class HonkWorker(TestWorker):
 
 @pytest.mark.parametrize("problem", (False, True))
 def test_job_runner_override(
-    redis: Redis, random_queue_name: str, capsys, problem: bool
+    redis: RedisClient, random_queue_name: str, capsys, problem: bool
 ):
     args = {"a": "err", "b": -8} if problem else {"a": 10, "b": 15}
     job = enqueue(
@@ -56,7 +62,7 @@ def test_job_runner_override(
     assert ("Alarmed honk!" in output) == problem
 
 
-def test_custom_encoding(redis: Redis, random_queue_name: str):
+def test_custom_encoding(redis: RedisClient, random_queue_name: str):
     job = enqueue(
         redis,
         random_queue_name,
