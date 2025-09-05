@@ -23,12 +23,12 @@ def redis_url() -> str:
     return url
 
 
-@pytest.fixture()
+@pytest.fixture
 def redis(redis_url: str) -> Redis:
     return Redis.from_url(redis_url)
 
 
-@pytest.fixture()
+@pytest.fixture
 def random_queue_name() -> str:
     return f"test_queue_{get_random_pronounceable_string()}"
 

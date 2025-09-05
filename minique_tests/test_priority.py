@@ -23,7 +23,7 @@ def assert_queue_priorities(
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def enqueue_job(redis: Redis, random_queue_name: str):
     def inner(priority=0, job_id=None):
         return enqueue_priority(

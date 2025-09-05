@@ -17,7 +17,7 @@ from minique_tests.jobs import (
 from minique_tests.worker import TestWorker
 
 
-@pytest.mark.parametrize("success", (False, True))
+@pytest.mark.parametrize("success", [False, True], ids=["fail", "succeed"])
 def test_basics(redis: Redis, success: bool, random_queue_name: str) -> None:
     kwargs = {"a": 10, "b": (15 if success else 0)}
     job = enqueue(

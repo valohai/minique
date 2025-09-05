@@ -38,7 +38,7 @@ class HonkWorker(TestWorker):
     job_runner_class = HonkJobRunner
 
 
-@pytest.mark.parametrize("problem", (False, True))
+@pytest.mark.parametrize("problem", [False, True], ids=["clean", "problematic"])
 def test_job_runner_override(
     redis: Redis,
     random_queue_name: str,
