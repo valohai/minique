@@ -38,6 +38,6 @@ def sentry_event_calls(monkeypatch) -> Optional[list]:
         return None
     client = sentry_sdk.Client(dsn="http://a:a@example.com/123")
     client.capture_event = Mock()
-    # TODO: this doesn't clean up the hub – maybe we don't need to?
-    sentry_sdk.Hub.current.bind_client(client)
+    # TODO: this doesn't clean up the global scope – maybe we don't need to?
+    sentry_sdk.get_global_scope().set_client(client)
     return client.capture_event.call_args_list

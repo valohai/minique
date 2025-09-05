@@ -18,7 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 sentry = [
-    "sentry_sdk~=1.10",
+    "sentry-sdk~=2.36",
 ]
 test = [
     "pytest-cov",
