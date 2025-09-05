@@ -1,5 +1,5 @@
 import random
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib import import_module
 from threading import local
@@ -30,26 +30,6 @@ def _set_current_job(job: "Job") -> Iterator[None]:
 
 def get_current_job() -> Optional["Job"]:
     return getattr(_current_jobs, "current_job", None)
-
-
-class cached_property:  # TODO: remove when py3.8+ only  # noqa: N801
-    """A property that is only computed once per instance and then replaces
-    itself with an ordinary attribute. Deleting the attribute resets the
-    property.
-
-    Source: https://github.com/bottlepy/bottle/blob/0.11.5/bottle.py#L175
-    """
-
-    def __init__(self, func: Callable[..., Any]) -> None:
-        self.__doc__ = getattr(func, "__doc__", "")
-        self.func = func
-
-    def __get__(self, obj: Any, cls: Any) -> Any:
-        if obj is None:
-            # We're being accessed from the class itself, not from an object
-            return self
-        value = obj.__dict__[self.func.__name__] = self.func(obj)
-        return value
 
 
 consonants = "cdgkklmmnnprst"

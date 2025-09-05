@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Callable
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 from minique import encoding
@@ -15,7 +16,6 @@ from minique.excs import (
     MissingJobData,
     NoSuchJob,
 )
-from minique.utils import cached_property
 
 if TYPE_CHECKING:
     from redis import Redis
