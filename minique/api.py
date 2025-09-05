@@ -41,7 +41,7 @@ def enqueue(  # noqa: PLR0913
     :raises minique.excs.NoSuchJob: If the job does not exist right after creation.
     """
     queue = Queue(redis, queue_name)
-    job = _define_and_store_job(
+    return _define_and_store_job(
         redis=redis,
         callable=callable,
         kwargs=kwargs,
@@ -51,7 +51,6 @@ def enqueue(  # noqa: PLR0913
         encoding_name=encoding_name,
         queue=queue,
     )
-    return job
 
 
 def enqueue_priority(  # noqa: PLR0913
@@ -81,7 +80,7 @@ def enqueue_priority(  # noqa: PLR0913
     :raises minique.excs.NoSuchJob: If the job does not exist right after creation.
     """
     queue = PriorityQueue(redis, queue_name)
-    job = _define_and_store_job(
+    return _define_and_store_job(
         redis=redis,
         callable=callable,
         kwargs=kwargs,
@@ -92,7 +91,6 @@ def enqueue_priority(  # noqa: PLR0913
         queue=queue,
         priority=priority,
     )
-    return job
 
 
 def store(  # noqa: PLR0913

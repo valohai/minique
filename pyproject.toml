@@ -75,6 +75,7 @@ select = [
     "PLR",
     "PLW",
     "PT",
+    "RET",
     "S",
     "SIM",
     "T2",

@@ -14,8 +14,7 @@ _current_jobs = local()
 def import_by_string(spec: str) -> Any:
     module_name, _, func_name = spec.rpartition(".")
     module = import_module(module_name)
-    func = getattr(module, func_name)
-    return func
+    return getattr(module, func_name)
 
 
 @contextmanager
