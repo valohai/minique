@@ -78,7 +78,7 @@ class Worker:
             except KeyboardInterrupt:
                 break
             except Exception:
-                self.log.error("Unexpected worker tick error", exc_info=True)
+                self.log.exception("Unexpected worker tick error")
 
     def process_exception(
         self,

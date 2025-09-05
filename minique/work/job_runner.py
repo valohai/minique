@@ -131,7 +131,7 @@ class JobRunner:
                     )
                     break
                 except AlreadyResulted as arx:
-                    self.log.error(str(arx), exc_info=True)
+                    self.log.exception(str(arx))
                     break
                 except Exception:
                     # https://cloud.google.com/iot/docs/how-tos/exponential-backoff

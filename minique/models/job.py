@@ -50,7 +50,7 @@ class Job:  # noqa: PLW1641 (this class has no __hash__ by design)
                 f"Job {self.id} has already been finished, will not enqueue",
             )
         status = self.status
-        if status in (JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.CANCELLED):
+        if status in {JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.CANCELLED}:
             raise InvalidStatus(f"Job {self.id} has status {status}, will not enqueue")
 
         return self.get_queue().ensure_enqueued(self)
