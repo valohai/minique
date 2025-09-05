@@ -16,7 +16,7 @@ env:
 jobs:
 
   Test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
@@ -37,45 +37,45 @@ jobs:
       REDIS_URL: 'redis://localhost:6379/0'
       SENTRY_DSN: 'http://user:pass@localhost:12340/foo'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: 'Set up Python ${{ matrix.python-version }}'
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '${{ matrix.python-version }}'
       - run: 'pip install -e ".$EXTRA" -e ".[test]"'
         env:
           EXTRA: '${{ matrix.install-extra }}'
       - run: py.test -vvv --cov .
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: 'Python ${{ matrix.python-version }}'
 
   Lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - uses: pre-commit/action@v3.0.0
+      - uses: pre-commit/action@v3.0.1
 
   Mypy:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - run: pip install -e .[sentry] mypy==1.0.0 types-redis
       - run: mypy --strict --install-types --non-interactive --show-error-codes minique
 
   Build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [ Lint, Mypy, Test ]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - run: pip install build twine
