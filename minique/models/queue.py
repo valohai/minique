@@ -1,6 +1,6 @@
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from __future__ import annotations
 
-from redis import Redis
+from typing import TYPE_CHECKING, Any
 
 from minique.consts import QUEUE_KEY_PREFIX
 from minique.excs import NoSuchJob
@@ -8,11 +8,13 @@ from minique.utils import cached_property
 from minique.utils.redis_list import read_list
 
 if TYPE_CHECKING:
+    from redis import Redis
+
     from minique.models.job import Job
 
 
 class Queue:
-    def __init__(self, redis: "Redis[bytes]", name: str) -> None:
+    def __init__(self, redis: Redis[bytes], name: str) -> None:
         self.redis = redis
         self.name = str(name)
 
@@ -30,7 +32,7 @@ class Queue:
         """
         return self.redis.delete(self.redis_key)
 
-    def get_queue_index(self, job: "Job") -> Optional[int]:
+    def get_queue_index(self, job: Job) -> int | None:
         # TODO: use `LPOS` (https://redis.io/commands/lpos/) when available for this
         job_id_bytes = str(job.id).encode()
         for index, value in enumerate(read_list(self.redis, self.redis_key)):
@@ -38,7 +40,7 @@ class Queue:
                 return index
         return None
 
-    def ensure_enqueued(self, job: "Job") -> Tuple[bool, int]:
+    def ensure_enqueued(self, job: Job) -> tuple[bool, int]:
         """
         Ensure the job is in the queue.
 
@@ -63,7 +65,7 @@ class Queue:
 
         return False, index
 
-    def add_job(self, job: "Job") -> int:
+    def add_job(self, job: Job) -> int:
         """Add a job to the queue in the appropriate position for its priority.
 
         :param job: The Job object to be added.

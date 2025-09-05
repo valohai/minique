@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import json
 import time
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Union
-
-from redis import Redis
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from minique import encoding
 from minique.consts import JOB_KEY_PREFIX, RESULT_KEY_PREFIX
@@ -11,23 +12,24 @@ from minique.excs import (
     AlreadyAcquired,
     AlreadyResulted,
     InvalidStatus,
-    NoSuchJob,
     MissingJobData,
+    NoSuchJob,
 )
 from minique.utils import cached_property
 
-
 if TYPE_CHECKING:
-    from minique.models.queue import Queue
+    from redis import Redis
+
     from minique.models.priority_queue import PriorityQueue
+    from minique.models.queue import Queue
 
 
 class Job:
     # Used for testing:
-    replacement_callable: Optional[Callable[..., Any]] = None
-    replacement_kwargs: Optional[Dict[str, Any]] = None
+    replacement_callable: Callable[..., Any] | None = None
+    replacement_kwargs: dict[str, Any] | None = None
 
-    def __init__(self, redis: "Redis[bytes]", id: str) -> None:
+    def __init__(self, redis: Redis[bytes], id: str) -> None:
         self.redis = redis
         self.id = str(id)
 
@@ -35,7 +37,7 @@ class Job:
         if not self.exists:
             raise NoSuchJob(f"Job {self.id} does not exist")
 
-    def ensure_enqueued(self) -> Tuple[bool, int]:
+    def ensure_enqueued(self) -> tuple[bool, int]:
         """
         Ensure the job is indeed in its queue. See the docs for Queue.ensure_enqueued() for more information.
         """
@@ -77,7 +79,7 @@ class Job:
         return f"{RESULT_KEY_PREFIX}{self.id}"
 
     @property
-    def acquisition_info(self) -> Optional[Dict[str, Any]]:
+    def acquisition_info(self) -> dict[str, Any] | None:
         # Acquisition info is always stored as JSON, not with the `encoding`
         acquisition_json = self.redis.hget(self.redis_key, "acquired")
         if acquisition_json:
@@ -96,11 +98,11 @@ class Job:
         return self.redis.hexists(self.redis_key, "acquired")
 
     @property
-    def encoded_result(self) -> Optional[bytes]:
+    def encoded_result(self) -> bytes | None:
         return self.redis.get(self.result_redis_key)
 
     @property
-    def result(self) -> Optional[Any]:
+    def result(self) -> Any | None:
         result_data = self.encoded_result
         if result_data is not None:
             self.cleanup()
@@ -108,11 +110,11 @@ class Job:
         return None
 
     @property
-    def encoded_meta(self) -> Optional[bytes]:
+    def encoded_meta(self) -> bytes | None:
         return self.redis.hget(self.redis_key, "meta")
 
     @property
-    def meta(self) -> Optional[Any]:
+    def meta(self) -> Any | None:
         """
         Get any possible in-band progress metadata for this job.
         """
@@ -129,7 +131,7 @@ class Job:
         return JobStatus(status.decode())
 
     @property
-    def heartbeat(self) -> Optional[float]:
+    def heartbeat(self) -> float | None:
         """
         Get heartbeat of this job after job's refresh_heartbeat has been called
         """
@@ -175,7 +177,7 @@ class Job:
     def queue_name(self) -> str:
         return self.get_queue_name(missing_ok=False)  # type:ignore[return-value]
 
-    def get_queue_name(self, *, missing_ok: bool = True) -> Optional[str]:
+    def get_queue_name(self, *, missing_ok: bool = True) -> str | None:
         queue = self.redis.hget(self.redis_key, "queue")
         if not queue:
             if missing_ok:
@@ -184,7 +186,7 @@ class Job:
         return queue.decode()
 
     @property
-    def kwargs(self) -> Dict[str, Any]:
+    def kwargs(self) -> dict[str, Any]:
         kwargs_data = self.redis.hget(self.redis_key, "kwargs")
         if not kwargs_data:
             return {}
@@ -209,9 +211,9 @@ class Job:
     def get_encoding(self) -> encoding.BaseEncoding:
         return encoding.registry[self.encoding_name]()
 
-    def get_queue(self) -> "Union[Queue, PriorityQueue]":
-        from minique.models.queue import Queue
+    def get_queue(self) -> Queue | PriorityQueue:
         from minique.models.priority_queue import PriorityQueue
+        from minique.models.queue import Queue
 
         if self.has_priority:
             return PriorityQueue(redis=self.redis, name=self.queue_name)

@@ -1,16 +1,21 @@
+from __future__ import annotations
+
 import logging
+from collections.abc import Iterable
 from os import getpid
 from platform import node
-from typing import Any, Iterable, List, Optional, Union
-
-from redis import Redis
+from typing import TYPE_CHECKING, Any
 
 from minique.compat import sentry_sdk
 from minique.enums import JobStatus
 from minique.models.job import Job
 from minique.models.queue import Queue
-from minique.types import ContextDict, ExcInfo
 from minique.work.job_runner import JobRunner
+
+if TYPE_CHECKING:
+    from redis import Redis
+
+    from minique.types import ContextDict, ExcInfo
 
 
 class Worker:
@@ -22,8 +27,8 @@ class Worker:
 
     def __init__(
         self,
-        redis: "Redis[bytes]",
-        queues: List[Queue],
+        redis: Redis[bytes],
+        queues: list[Queue],
     ) -> None:
         self.id = self.compute_id()
         self.redis = redis
@@ -34,10 +39,10 @@ class Worker:
     @classmethod
     def for_queue_names(
         cls,
-        redis: "Redis[bytes]",
-        queue_names: Union[List[str], str],
+        redis: Redis[bytes],
+        queue_names: list[str] | str,
         **kwargs: Any,
-    ) -> "Worker":
+    ) -> Worker:
         if isinstance(queue_names, str):
             queue_names = [queue_names]
         kwargs.setdefault("queues", [Queue(redis, name) for name in queue_names])
@@ -48,14 +53,14 @@ class Worker:
         node_base = node().split(".")[0]
         return f"w-{node_base}-{getpid()}"
 
-    def get_next_job(self) -> Optional[Job]:
+    def get_next_job(self) -> Job | None:
         rv = self.redis.blpop([q.redis_key for q in self.queues], self.queue_timeout)
         if rv:  # 2-tuple of queue_key, job_id
             job_id = rv[1].decode()
             return Job(self.redis, job_id)
         return None
 
-    def tick(self) -> Optional[Job]:
+    def tick(self) -> Job | None:
         job = self.get_next_job()
         if not job:
             return None
@@ -77,8 +82,8 @@ class Worker:
 
     def process_exception(
         self,
-        excinfo: Optional[ExcInfo] = None,
-        context: Optional[ContextDict] = None,
+        excinfo: ExcInfo | None = None,
+        context: ContextDict | None = None,
     ) -> None:  # pragma: no cover
         """
         A hook to log or process exceptions.

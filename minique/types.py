@@ -1,8 +1,9 @@
-from types import TracebackType
-from typing import Any, Dict, Tuple, Type, Union
+from __future__ import annotations
 
-ExcInfo = Union[
-    Tuple[Type[BaseException], BaseException, TracebackType],
-    Tuple[None, None, None],
-]
-ContextDict = Dict[str, Any]
+from types import TracebackType
+from typing import Any, TypeAlias
+
+ExcInfo: TypeAlias = (
+    tuple[type[BaseException], BaseException, TracebackType] | tuple[None, None, None]
+)
+ContextDict: TypeAlias = dict[str, Any]
