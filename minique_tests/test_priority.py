@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import pytest
-from redis.client import Redis
 
 from minique.api import cancel_job, enqueue, enqueue_priority
 from minique.models.job import Job
 from minique.models.priority_queue import PriorityQueue
 from minique_tests.worker import TestWorker
+
+if TYPE_CHECKING:
+    from minique.types import RedisClient
 
 
 def assert_queue_items(queue: PriorityQueue, jobs: Iterable[Job]) -> None:
@@ -23,7 +28,7 @@ def assert_queue_priorities(
 
 
 @pytest.fixture()
-def enqueue_job(redis: Redis, random_queue_name: str):
+def enqueue_job(redis: RedisClient, random_queue_name: str):
     def inner(priority=0, job_id=None):
         return enqueue_priority(
             redis,
@@ -36,7 +41,7 @@ def enqueue_job(redis: Redis, random_queue_name: str):
     return inner
 
 
-def test_priority_queueing(redis: Redis, enqueue_job):
+def test_priority_queueing(redis: RedisClient, enqueue_job):
     """Test that jobs can be added to the queue with varying priority"""
 
     j_p0 = enqueue_job(priority=0)
@@ -89,7 +94,7 @@ def test_priority_queueing(redis: Redis, enqueue_job):
     )
 
 
-def test_larger_queue(redis: Redis, enqueue_job, random_queue_name):
+def test_larger_queue(redis: RedisClient, enqueue_job, random_queue_name):
     job_ids = [
         enqueue_job(priority=i % 13 - 6, job_id=f"job_{random_queue_name}_1_{i}").id
         for i in range(1000)
@@ -121,7 +126,7 @@ def test_larger_queue(redis: Redis, enqueue_job, random_queue_name):
 
 
 @pytest.mark.parametrize("operation", ["cancel_job", "dequeue"])
-def test_dequeue_job(redis: Redis, enqueue_job, operation):
+def test_dequeue_job(redis: RedisClient, enqueue_job, operation):
     j_p0, j_p1, j_p2 = [enqueue_job(priority=n) for n in range(3)]
     queue = j_p0.get_queue()
     if operation == "dequeue":
@@ -147,7 +152,9 @@ def test_dequeue_job(redis: Redis, enqueue_job, operation):
     )
 
 
-def test_ensure_priority_queued(redis: Redis, random_queue_name: str, enqueue_job):
+def test_ensure_priority_queued(
+    redis: RedisClient, random_queue_name: str, enqueue_job
+):
     j_p0, j_p1, j_p2 = [enqueue_job(priority=n) for n in range(3)]
     j_p1.dequeue()
     queue = j_p0.get_queue()
@@ -166,7 +173,7 @@ def test_ensure_priority_queued(redis: Redis, random_queue_name: str, enqueue_jo
 
 
 def test_worker_consumes_priority_job(
-    redis: Redis, random_queue_name: str, enqueue_job
+    redis: RedisClient, random_queue_name: str, enqueue_job
 ):
     worker = TestWorker.for_queue_names(redis, [random_queue_name])
 
@@ -202,7 +209,7 @@ def test_worker_consumes_priority_job(
     j_p1.cleanup()
 
 
-def test_non_priority_mixup(redis: Redis, random_queue_name: str):
+def test_non_priority_mixup(redis: RedisClient, random_queue_name: str):
     """Test that priority queueing does not crash even if there are jobs without a
     priority value in the hash table
 

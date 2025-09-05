@@ -4,11 +4,11 @@ from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from redis import Redis
+    from minique.types import RedisClient
 
 
 def read_list(
-    redis_conn: Redis[bytes],
+    redis_conn: RedisClient,
     key: str,
     *,
     chunk_size: int = 4096,

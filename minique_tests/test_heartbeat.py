@@ -11,7 +11,7 @@ from minique.work.worker import Worker
 from minique_tests.jobs import reverse_job_id
 
 if TYPE_CHECKING:
-    from redis import Redis
+    from minique.types import RedisClient
 
 """
 Here is a small example how to use the Heartbeat feature.
@@ -72,7 +72,7 @@ class JobPacemakerThread(threading.Thread):
         self._stop_signal.set()
 
 
-def test_heartbeat_worker(redis: Redis, random_queue_name: str) -> None:
+def test_heartbeat_worker(redis: RedisClient, random_queue_name: str) -> None:
     job = enqueue(redis, random_queue_name, reverse_job_id)
     assert job.heartbeat is None
     worker = TestHeartbeatWorker.for_queue_names(redis, [random_queue_name])

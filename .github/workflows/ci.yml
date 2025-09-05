@@ -20,15 +20,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - python-version: '3.10'
-          - python-version: '3.11'
-          - python-version: '3.12'
-          - python-version: '3.13'
-          - python-version: '3.13'
-            install-extra: '[sentry]'
+          # With the Redis client
+          - { python-version: '3.10', install-extra: '[redis]' }
+          - { python-version: '3.11', install-extra: '[redis]' }
+          - { python-version: '3.12', install-extra: '[redis]' }
+          - { python-version: '3.13', install-extra: '[redis]' }
+          - { python-version: '3.13', install-extra: '[redis,sentry]'}
+          # With the Valkey server
+          - { python-version: '3.13', install-extra: '[redis]', redis-image: 'valkey/valkey:8'}
+          # With the Valkey client and Valkey server
+          - { python-version: '3.13', install-extra: '[valkey,sentry]', redis-image: 'valkey/valkey:8'}
     services:
       redis:
-        image: redis
+        image: ${{ matrix.redis-image || 'redis' }}
         ports:
           - 6379:6379
     env:

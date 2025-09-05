@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import time
 import uuid
+from typing import TYPE_CHECKING
 
 import pytest
-from redis import Redis
 
 from minique.api import enqueue
 from minique.enums import JobStatus
@@ -10,6 +12,9 @@ from minique.excs import AlreadyAcquired, DuplicateJob, NoSuchJob
 from minique.models.queue import Queue
 from minique_tests.jobs import job_with_unjsonable_retval
 from minique_tests.worker import TestWorker
+
+if TYPE_CHECKING:
+    from minique.types import RedisClient
 
 
 def check_sentry_event_calls(sentry_event_calls, num_expected: int):
@@ -34,7 +39,7 @@ def check_sentry_event_calls(sentry_event_calls, num_expected: int):
         raise AssertionError("No `error` level event recorded in Sentry")
 
 
-def test_unjsonable_arg(redis: Redis, random_queue_name: str):
+def test_unjsonable_arg(redis: RedisClient, random_queue_name: str):
     kwargs = {
         "phooey": uuid.uuid4(),
     }
@@ -42,7 +47,9 @@ def test_unjsonable_arg(redis: Redis, random_queue_name: str):
         enqueue(redis, random_queue_name, job_with_unjsonable_retval, kwargs)
 
 
-def test_unjsonable_retval(redis: Redis, random_queue_name: str, sentry_event_calls):
+def test_unjsonable_retval(
+    redis: RedisClient, random_queue_name: str, sentry_event_calls
+):
     job = enqueue(redis, random_queue_name, job_with_unjsonable_retval)
     TestWorker.for_queue_names(redis, random_queue_name).tick()
     assert job.status == JobStatus.FAILED
@@ -51,7 +58,7 @@ def test_unjsonable_retval(redis: Redis, random_queue_name: str, sentry_event_ca
     check_sentry_event_calls(sentry_event_calls, 1)
 
 
-def test_disappeared_job(redis: Redis, random_queue_name: str):
+def test_disappeared_job(redis: RedisClient, random_queue_name: str):
     enqueue(
         redis, random_queue_name, "minique_tests.jobs.sum_positive_values", job_ttl=1
     )
@@ -62,7 +69,7 @@ def test_disappeared_job(redis: Redis, random_queue_name: str):
         worker.tick()
 
 
-def test_rerun_done_job(redis: Redis, random_queue_name: str, sentry_event_calls):
+def test_rerun_done_job(redis: RedisClient, random_queue_name: str, sentry_event_calls):
     job = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     worker = TestWorker.for_queue_names(redis, random_queue_name)
     worker.tick()
@@ -76,7 +83,7 @@ def test_rerun_done_job(redis: Redis, random_queue_name: str, sentry_event_calls
     check_sentry_event_calls(sentry_event_calls, 2)
 
 
-def test_duplicate_names(redis: Redis, random_queue_name: str):
+def test_duplicate_names(redis: RedisClient, random_queue_name: str):
     job = enqueue(redis, random_queue_name, "minique_tests.jobs.sum_positive_values")
     with pytest.raises(DuplicateJob):
         enqueue(
@@ -88,7 +95,7 @@ def test_duplicate_names(redis: Redis, random_queue_name: str):
 
 
 def test_invalid_callable_name(
-    redis: Redis, random_queue_name: str, sentry_event_calls
+    redis: RedisClient, random_queue_name: str, sentry_event_calls
 ):
     job = enqueue(redis, random_queue_name, "os.system", {"command": "evil"})
     worker = TestWorker.for_queue_names(redis, random_queue_name)

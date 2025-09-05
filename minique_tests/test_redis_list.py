@@ -1,16 +1,21 @@
-from redis import Redis
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from minique.utils.redis_list import read_list
 
+if TYPE_CHECKING:
+    from minique.types import RedisClient
 
-def test_read_list(redis: Redis, random_queue_name: str):
+
+def test_read_list(redis: RedisClient, random_queue_name: str):
     data = [str(x).encode() for x in range(500)]
     redis.rpush(random_queue_name, *data)
     assert list(read_list(redis, random_queue_name, chunk_size=7)) == data
     redis.delete(random_queue_name)
 
 
-def test_read_list_last_n(redis: Redis, random_queue_name: str):
+def test_read_list_last_n(redis: RedisClient, random_queue_name: str):
     data = [str(x).encode() for x in range(6)]
     redis.rpush(random_queue_name, *data)
 
@@ -26,7 +31,7 @@ def test_read_list_last_n(redis: Redis, random_queue_name: str):
     redis.delete(random_queue_name)
 
 
-def test_read_list_filter(redis: Redis, random_queue_name: str):
+def test_read_list_filter(redis: RedisClient, random_queue_name: str):
     data = [str(x).encode() for x in range(101)]
     redis.rpush(random_queue_name, *data)
 

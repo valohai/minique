@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
-from redis import Redis
 
 from minique.compat import sentry_sdk
 from minique.utils import get_random_pronounceable_string
+
+if TYPE_CHECKING:
+    from minique.types import RedisClient
 
 
 def pytest_configure() -> None:
@@ -24,8 +27,10 @@ def redis_url() -> str:
 
 
 @pytest.fixture()
-def redis(redis_url: str) -> Redis:
-    return Redis.from_url(redis_url)
+def redis(redis_url: str) -> RedisClient:
+    from minique.cli import get_redis
+
+    return get_redis(redis_url)
 
 
 @pytest.fixture()
