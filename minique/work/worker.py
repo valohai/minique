@@ -88,7 +88,7 @@ class Worker:
         :param excinfo: Optionally, the sys.exc_info() 3-tuple
         """
         if sentry_sdk:
-            with sentry_sdk.push_scope() as scope:
+            with sentry_sdk.new_scope() as scope:
                 if context:
                     scope.set_context("minique", context)
                 sentry_sdk.capture_exception(excinfo)

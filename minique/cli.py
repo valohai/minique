@@ -31,8 +31,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         except Exception as exc:
             worker.log.warning("Failed to initialize Sentry: %s", exc, exc_info=True)
         else:
-            hub = sentry_sdk.hub.Hub.current
-            if hub and hub.client and hub.client.dsn:
+            if (client := sentry_sdk.get_client()) and client.is_active():
                 worker.log.info("Sentry configured with a valid DSN")
 
     if args.single_tick:
