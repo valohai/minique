@@ -4,7 +4,7 @@ import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-import minique.encoding as encoding
+from minique import encoding
 from minique.enums import JobStatus
 from minique.excs import DuplicateJob
 from minique.models.job import Job
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from redis import Redis
 
 
-def enqueue(
+def enqueue(  # noqa: PLR0913
     redis: Redis[bytes],
     queue_name: str,
     callable: Callable[..., Any] | str,
@@ -54,7 +54,7 @@ def enqueue(
     return job
 
 
-def enqueue_priority(
+def enqueue_priority(  # noqa: PLR0913
     redis: Redis[bytes],
     queue_name: str,
     callable: Callable[..., Any] | str,
@@ -95,7 +95,7 @@ def enqueue_priority(
     return job
 
 
-def store(
+def store(  # noqa: PLR0913
     redis: Redis[bytes],
     callable: Callable[..., Any] | str,
     kwargs: dict[str, Any] | None = None,
@@ -171,7 +171,7 @@ def cancel_job(
     return False
 
 
-def _define_and_store_job(
+def _define_and_store_job(  # noqa: PLR0913
     *,
     redis: Redis[bytes],
     callable: Callable[..., Any] | str,

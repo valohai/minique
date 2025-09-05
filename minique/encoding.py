@@ -14,7 +14,7 @@ def register_encoding(
     default: bool = False,
 ) -> Callable[[type[BaseEncoding]], type[BaseEncoding]]:
     def decorator(cls: type[BaseEncoding]) -> type[BaseEncoding]:
-        global default_encoding_name
+        global default_encoding_name  # noqa: PLW0603
         registry[name] = cls
         if default:
             default_encoding_name = name

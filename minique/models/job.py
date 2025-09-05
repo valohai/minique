@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from minique.models.queue import Queue
 
 
-class Job:
+class Job:  # noqa: PLW1641 (this class has no __hash__ by design)
     # Used for testing:
     replacement_callable: Callable[..., Any] | None = None
     replacement_kwargs: dict[str, Any] | None = None

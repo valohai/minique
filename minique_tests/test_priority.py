@@ -101,8 +101,8 @@ def test_larger_queue(redis: Redis, enqueue_job, random_queue_name):
 
     # All jobs are queued and order is correct
     max_priority = 6
-    for job_id in redis.lrange(queue.redis_key, 0, -1):
-        job_id = job_id.decode()
+    for job_id_b in redis.lrange(queue.redis_key, 0, -1):
+        job_id = job_id_b.decode()
         job_priority = int(redis.hget(queue.prio_key, job_id))
         assert job_priority <= max_priority
         assert job_id in job_ids
