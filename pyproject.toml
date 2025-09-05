@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Minimal Redis job runner"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 authors = [
     { name = "Valohai", email = "hait@valohai.com" },
 ]
@@ -53,7 +53,6 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-target-version = "py37"
 line-length = 88
 
 [tool.ruff.lint]

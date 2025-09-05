@@ -1,10 +1,10 @@
 # minique /miniːk/
 
-A minimal Redis 4.0+ job queue for Python 3.7 and above.
+A minimal Redis 4.0+ job queue for Python 3.9 and above.
 
 ## Requirements
 
-* Python 3.7+
+* Python 3.9+
 * Redis 4.0+
 
 ## Usage
