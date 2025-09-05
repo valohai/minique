@@ -34,7 +34,7 @@ class Worker:
         self.redis = redis
         self.queues = list(queues)
         self.log = logging.getLogger(f"{__name__}.{self.id.replace('.', '_')}")
-        assert all(isinstance(q, Queue) for q in queues)
+        assert all(isinstance(q, Queue) for q in queues)  # noqa: S101
 
     @classmethod
     def for_queue_names(

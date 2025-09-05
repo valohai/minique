@@ -55,6 +55,7 @@ line-length = 88
 mccabe.max-complexity = 10
 ignore = [
     "E501",
+    "S311", # We don't use RNGs for crypto
 ]
 select = [
     "B",
@@ -64,6 +65,7 @@ select = [
     "FA100",
     "I",
     "PGH003",
+    "S",
     "T2",
     "TC002",
     "TRY201",
@@ -72,7 +74,7 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"minique_tests/**" = ["T2"]
+"minique_tests/**" = ["T2", "S101"]
 
 [dependency-groups]
 dev = [

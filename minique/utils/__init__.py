@@ -20,7 +20,8 @@ def import_by_string(spec: str) -> Any:
 
 @contextmanager
 def _set_current_job(job: "Job") -> Iterator[None]:
-    assert not get_current_job()
+    if get_current_job():
+        raise RuntimeError("Current job is already set")
     _current_jobs.current_job = job
     try:
         yield

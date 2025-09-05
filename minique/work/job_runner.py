@@ -27,7 +27,7 @@ class JobRunner:
         self.worker = worker
         self.job = job
         self.redis = job.redis
-        assert isinstance(self.redis, Redis)
+        assert isinstance(self.redis, Redis)  # noqa: S101
         self.log: logging.Logger = logging.getLogger(
             f"{__name__}.{str(self.job.id).replace('.', '_')}"
         )
@@ -72,7 +72,7 @@ class JobRunner:
         return value  # type: ignore[no-any-return]
 
     def complete(self, success: bool, value: str | bytes, duration: float) -> None:
-        assert isinstance(success, bool)
+        assert isinstance(success, bool)  # noqa: S101
         update_payload = {
             "status": (JobStatus.SUCCESS if success else JobStatus.FAILED).value,
             "duration": float(duration),
