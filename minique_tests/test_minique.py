@@ -21,7 +21,10 @@ from minique_tests.worker import TestWorker
 def test_basics(redis: Redis, success: bool, random_queue_name: str) -> None:
     kwargs = {"a": 10, "b": (15 if success else 0)}
     job = enqueue(
-        redis, random_queue_name, "minique_tests.jobs.sum_positive_values", kwargs
+        redis,
+        random_queue_name,
+        "minique_tests.jobs.sum_positive_values",
+        kwargs,
     )
     assert not job.has_finished
     assert job.kwargs == kwargs

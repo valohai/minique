@@ -43,11 +43,11 @@ class Job:
         """
         if self.has_started:
             raise AlreadyAcquired(
-                f"Job {self.id} has already been started, will not enqueue"
+                f"Job {self.id} has already been started, will not enqueue",
             )
         if self.has_finished:
             raise AlreadyResulted(
-                f"Job {self.id} has already been finished, will not enqueue"
+                f"Job {self.id} has already been finished, will not enqueue",
             )
         status = self.status
         if status in (JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.CANCELLED):

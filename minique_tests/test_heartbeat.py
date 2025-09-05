@@ -38,7 +38,8 @@ class TestHeartbeatWorker(Worker):
             return None
         runner = self.job_runner_class(worker=self, job=job)
         heart = JobPacemakerThread(
-            job=job, interval=self.heartbeat_interval
+            job=job,
+            interval=self.heartbeat_interval,
         )  # post a heartbeat once a minute
         heart.start()
         with closing(heart):

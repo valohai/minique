@@ -9,7 +9,9 @@ default_encoding_name: str | None = None
 
 
 def register_encoding(
-    name: str, *, default: bool = False
+    name: str,
+    *,
+    default: bool = False,
 ) -> Callable[[type[BaseEncoding]], type[BaseEncoding]]:
     def decorator(cls: type[BaseEncoding]) -> type[BaseEncoding]:
         global default_encoding_name

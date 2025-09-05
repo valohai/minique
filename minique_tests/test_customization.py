@@ -40,11 +40,17 @@ class HonkWorker(TestWorker):
 
 @pytest.mark.parametrize("problem", (False, True))
 def test_job_runner_override(
-    redis: Redis, random_queue_name: str, capsys, problem: bool
+    redis: Redis,
+    random_queue_name: str,
+    capsys,
+    problem: bool,
 ):
     args = {"a": "err", "b": -8} if problem else {"a": 10, "b": 15}
     job = enqueue(
-        redis, random_queue_name, "minique_tests.jobs.sum_positive_values", args
+        redis,
+        random_queue_name,
+        "minique_tests.jobs.sum_positive_values",
+        args,
     )
     assert not job.has_finished
     worker = HonkWorker.for_queue_names(redis, [random_queue_name])

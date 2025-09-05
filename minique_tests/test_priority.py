@@ -15,7 +15,8 @@ def assert_queue_items(queue: PriorityQueue, jobs: Iterable[Job]) -> None:
 
 
 def assert_queue_priorities(
-    queue: PriorityQueue, priority_job_map: Iterable[tuple[Job, int]]
+    queue: PriorityQueue,
+    priority_job_map: Iterable[tuple[Job, int]],
 ) -> None:
     assert queue.redis.hgetall(queue.prio_key) == {
         job.id.encode(): str(prio).encode() for job, prio in priority_job_map
@@ -111,7 +112,8 @@ def test_larger_queue(redis: Redis, enqueue_job, random_queue_name):
     redis.delete(queue.redis_key)
     new_job_ids = {
         enqueue_job(
-            priority=i % 13 - 6, job_id=f"job_{random_queue_name}_2_{i}"
+            priority=i % 13 - 6,
+            job_id=f"job_{random_queue_name}_2_{i}",
         ).id.encode()
         for i in range(1000)
     }
@@ -166,7 +168,9 @@ def test_ensure_priority_queued(redis: Redis, random_queue_name: str, enqueue_jo
 
 
 def test_worker_consumes_priority_job(
-    redis: Redis, random_queue_name: str, enqueue_job
+    redis: Redis,
+    random_queue_name: str,
+    enqueue_job,
 ):
     worker = TestWorker.for_queue_names(redis, [random_queue_name])
 

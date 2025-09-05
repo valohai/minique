@@ -53,7 +53,10 @@ def test_unjsonable_retval(redis: Redis, random_queue_name: str, sentry_event_ca
 
 def test_disappeared_job(redis: Redis, random_queue_name: str):
     enqueue(
-        redis, random_queue_name, "minique_tests.jobs.sum_positive_values", job_ttl=1
+        redis,
+        random_queue_name,
+        "minique_tests.jobs.sum_positive_values",
+        job_ttl=1,
     )
     assert Queue(redis, random_queue_name).length == 1
     time.sleep(2)
@@ -88,7 +91,9 @@ def test_duplicate_names(redis: Redis, random_queue_name: str):
 
 
 def test_invalid_callable_name(
-    redis: Redis, random_queue_name: str, sentry_event_calls
+    redis: Redis,
+    random_queue_name: str,
+    sentry_event_calls,
 ):
     job = enqueue(redis, random_queue_name, "os.system", {"command": "evil"})
     worker = TestWorker.for_queue_names(redis, random_queue_name)

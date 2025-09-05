@@ -29,7 +29,7 @@ class JobRunner:
         self.redis = job.redis
         assert isinstance(self.redis, Redis)  # noqa: S101
         self.log: logging.Logger = logging.getLogger(
-            f"{__name__}.{str(self.job.id).replace('.', '_')}"
+            f"{__name__}.{str(self.job.id).replace('.', '_')}",
         )
         job.ensure_exists()
 
@@ -37,7 +37,7 @@ class JobRunner:
         new_acquisition_info = json.dumps(self.get_acquisition_info(), default=str)
         if not self.redis.hsetnx(self.job.redis_key, "acquired", new_acquisition_info):
             raise AlreadyAcquired(
-                f"job {self.job.id} already acquired: {self.job.acquisition_info}"
+                f"job {self.job.id} already acquired: {self.job.acquisition_info}",
             )
         self.redis.hset(self.job.redis_key, "status", JobStatus.ACQUIRED.value)
         self.redis.persist(self.job.redis_key)
@@ -58,7 +58,7 @@ class JobRunner:
             fnmatch.fnmatch(name, pat) for pat in self.worker.allowed_callable_patterns
         ):
             raise InvalidJob(
-                f"Name {name} doesn't match any pattern in {self.worker.allowed_callable_patterns}"
+                f"Name {name} doesn't match any pattern in {self.worker.allowed_callable_patterns}",
             )
         return True
 
