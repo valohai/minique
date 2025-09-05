@@ -24,7 +24,8 @@ jobs:
           - python-version: '3.10'
           - python-version: '3.11'
           - python-version: '3.12'
-          - python-version: '3.12'
+          - python-version: '3.13'
+          - python-version: '3.13'
             install-extra: '[sentry]'
     services:
       redis:
@@ -37,13 +38,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: 'Set up Python ${{ matrix.python-version }}'
-        uses: actions/setup-python@v6
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: '${{ matrix.python-version }}'
-      - run: 'pip install -e ".$EXTRA" -e ".[test]"'
+          activate-environment: true
+      - run: 'uv pip install -e ".$EXTRA"'
         env:
           EXTRA: '${{ matrix.install-extra }}'
-      - run: py.test -vvv --cov .
+      - run: uv run pytest -vvv --cov .
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -53,32 +55,27 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - uses: pre-commit/action@v3.0.1
+      - uses: akx/pre-commit-uv-action@v0.1.0
 
   Mypy:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.12'
-      - run: pip install -e .[sentry] mypy==1.0.0 types-redis
-      - run: mypy --strict --install-types --non-interactive --show-error-codes minique
+          python-version: '3.13'
+      - run: uv run --all-extras mypy --strict --install-types --non-interactive --show-error-codes minique
 
   Build:
     runs-on: ubuntu-24.04
     needs: [ Lint, Mypy, Test ]
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.12'
-      - run: pip install build twine
-      - run: python -m build .
-      - run: twine check dist/*
+          python-version: '3.13'
+      - run: uv build
+      - run: uvx twine check dist/*
       - uses: actions/upload-artifact@v4
         with:
           name: build

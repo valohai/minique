@@ -20,10 +20,6 @@ dependencies = [
 sentry = [
     "sentry-sdk~=2.36",
 ]
-test = [
-    "pytest-cov",
-    "pytest>=6",
-]
 
 [project.scripts]
 minique = "minique.cli:main"
@@ -73,6 +69,14 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "minique_tests/**" = ["T2"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.4.1",
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "types-redis>=4.6.0.11",
+]
 
 [tool.coverage.run]
 branch = true
