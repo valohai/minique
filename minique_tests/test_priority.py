@@ -1,10 +1,9 @@
+from collections.abc import Iterable
+
 import pytest
-
-from typing import Tuple, Iterable
-
 from redis.client import Redis
 
-from minique.api import enqueue, enqueue_priority, cancel_job
+from minique.api import cancel_job, enqueue, enqueue_priority
 from minique.models.job import Job
 from minique.models.priority_queue import PriorityQueue
 from minique_tests.worker import TestWorker
@@ -16,7 +15,7 @@ def assert_queue_items(queue: PriorityQueue, jobs: Iterable[Job]) -> None:
 
 
 def assert_queue_priorities(
-    queue: PriorityQueue, priority_job_map: Iterable[Tuple[Job, int]]
+    queue: PriorityQueue, priority_job_map: Iterable[tuple[Job, int]]
 ) -> None:
     assert queue.redis.hgetall(queue.prio_key) == {
         job.id.encode(): str(prio).encode() for job, prio in priority_job_map

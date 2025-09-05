@@ -1,26 +1,30 @@
-import time
-from typing import Any, Callable, Dict, Optional, Union
+from __future__ import annotations
 
-from redis import Redis
+import time
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import minique.encoding as encoding
 from minique.enums import JobStatus
 from minique.excs import DuplicateJob
 from minique.models.job import Job
-from minique.models.queue import Queue
 from minique.models.priority_queue import PriorityQueue
+from minique.models.queue import Queue
 from minique.utils import get_random_pronounceable_string
+
+if TYPE_CHECKING:
+    from redis import Redis
 
 
 def enqueue(
-    redis: "Redis[bytes]",
+    redis: Redis[bytes],
     queue_name: str,
-    callable: Union[Callable[..., Any], str],
-    kwargs: Optional[Dict[str, Any]] = None,
-    job_id: Optional[str] = None,
+    callable: Callable[..., Any] | str,
+    kwargs: dict[str, Any] | None = None,
+    job_id: str | None = None,
     job_ttl: int = 0,
     result_ttl: int = 86400 * 7,
-    encoding_name: Optional[str] = None,
+    encoding_name: str | None = None,
 ) -> Job:
     """
     Queue up callable as a job.
@@ -51,14 +55,14 @@ def enqueue(
 
 
 def enqueue_priority(
-    redis: "Redis[bytes]",
+    redis: Redis[bytes],
     queue_name: str,
-    callable: Union[Callable[..., Any], str],
-    kwargs: Optional[Dict[str, Any]] = None,
-    job_id: Optional[str] = None,
+    callable: Callable[..., Any] | str,
+    kwargs: dict[str, Any] | None = None,
+    job_id: str | None = None,
     job_ttl: int = 0,
     result_ttl: int = 86400 * 7,
-    encoding_name: Optional[str] = None,
+    encoding_name: str | None = None,
     priority: int = 0,
 ) -> Job:
     """
@@ -92,13 +96,13 @@ def enqueue_priority(
 
 
 def store(
-    redis: "Redis[bytes]",
-    callable: Union[Callable[..., Any], str],
-    kwargs: Optional[Dict[str, Any]] = None,
-    job_id: Optional[str] = None,
+    redis: Redis[bytes],
+    callable: Callable[..., Any] | str,
+    kwargs: dict[str, Any] | None = None,
+    job_id: str | None = None,
     job_ttl: int = 0,
     result_ttl: int = 86400 * 7,
-    encoding_name: Optional[str] = None,
+    encoding_name: str | None = None,
 ) -> Job:
     """
     Store callable as a job without placing it in the queue.
@@ -125,7 +129,7 @@ def store(
 
 
 def get_job(
-    redis: "Redis[bytes]",
+    redis: Redis[bytes],
     job_id: str,
 ) -> Job:
     job = Job(redis, job_id)
@@ -134,9 +138,9 @@ def get_job(
 
 
 def cancel_job(
-    redis: "Redis[bytes]",
+    redis: Redis[bytes],
     job_id: str,
-    expire_time: Optional[int] = None,
+    expire_time: int | None = None,
 ) -> bool:
     """
     Cancel the job with the given job ID.
@@ -169,15 +173,15 @@ def cancel_job(
 
 def _define_and_store_job(
     *,
-    redis: "Redis[bytes]",
-    callable: Union[Callable[..., Any], str],
-    kwargs: Optional[Dict[str, Any]] = None,
-    job_id: Optional[str] = None,
+    redis: Redis[bytes],
+    callable: Callable[..., Any] | str,
+    kwargs: dict[str, Any] | None = None,
+    job_id: str | None = None,
     job_ttl: int = 0,
     result_ttl: int = 86400 * 7,
-    encoding_name: Optional[str] = None,
-    queue: Optional[Queue] = None,
-    priority: Optional[int] = None,
+    encoding_name: str | None = None,
+    queue: Queue | None = None,
+    priority: int | None = None,
 ) -> Job:
     if not encoding_name:
         encoding_name = encoding.default_encoding_name
@@ -193,7 +197,7 @@ def _define_and_store_job(
     if job.exists:
         raise DuplicateJob(f"duplicate job: {job_id}")
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "callable": str(callable),
         "kwargs": encoder.encode(kwargs or {}),
         "encoding_name": encoding_name,

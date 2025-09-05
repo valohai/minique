@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import logging
 import os
-from typing import Optional
 from unittest.mock import Mock
 
 import pytest
@@ -33,7 +34,7 @@ def random_queue_name() -> str:
 
 
 @pytest.fixture
-def sentry_event_calls(monkeypatch) -> Optional[list]:
+def sentry_event_calls(monkeypatch) -> list | None:
     if not sentry_sdk:
         return None
     client = sentry_sdk.Client(dsn="http://a:a@example.com/123")

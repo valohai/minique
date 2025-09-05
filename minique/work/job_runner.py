@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import fnmatch
 import json
 import logging
@@ -5,22 +7,23 @@ import random
 import sys
 import time
 import traceback
-from typing import TYPE_CHECKING, Any, Callable, Dict, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from redis import Redis
 
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidJob
 from minique.models.job import Job
-from minique.types import ExcInfo
 from minique.utils import _set_current_job, import_by_string
 
 if TYPE_CHECKING:
+    from minique.types import ExcInfo
     from minique.work.worker import Worker
 
 
 class JobRunner:
-    def __init__(self, worker: "Worker", job: Job) -> None:
+    def __init__(self, worker: Worker, job: Job) -> None:
         self.worker = worker
         self.job = job
         self.redis = job.redis
@@ -39,7 +42,7 @@ class JobRunner:
         self.redis.hset(self.job.redis_key, "status", JobStatus.ACQUIRED.value)
         self.redis.persist(self.job.redis_key)
 
-    def get_acquisition_info(self) -> Dict[str, Any]:
+    def get_acquisition_info(self) -> dict[str, Any]:
         # Override me in a subclass if you like!
         return {"worker": self.worker.id, "time": time.time()}
 
@@ -55,10 +58,7 @@ class JobRunner:
             fnmatch.fnmatch(name, pat) for pat in self.worker.allowed_callable_patterns
         ):
             raise InvalidJob(
-                "Name {} doesn't match any pattern in {}".format(
-                    name,
-                    self.worker.allowed_callable_patterns,
-                )
+                f"Name {name} doesn't match any pattern in {self.worker.allowed_callable_patterns}"
             )
         return True
 
@@ -71,9 +71,7 @@ class JobRunner:
             raise InvalidJob("Invalid job function")
         return value  # type: ignore[no-any-return]
 
-    def complete(
-        self, success: bool, value: Union[str, bytes], duration: float
-    ) -> None:
+    def complete(self, success: bool, value: str | bytes, duration: float) -> None:
         assert isinstance(success, bool)
         update_payload = {
             "status": (JobStatus.SUCCESS if success else JobStatus.FAILED).value,

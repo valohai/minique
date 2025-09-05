@@ -1,15 +1,19 @@
-from typing import Iterable, Optional, Callable
+from __future__ import annotations
 
-from redis import Redis
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from redis import Redis
 
 
 def read_list(
-    redis_conn: "Redis[bytes]",
+    redis_conn: Redis[bytes],
     key: str,
     *,
     chunk_size: int = 4096,
-    filter_fn: Optional[Callable[[bytes], bool]] = None,
-    last_n: Optional[int] = None,
+    filter_fn: Callable[[bytes], bool] | None = None,
+    last_n: int | None = None,
 ) -> Iterable[bytes]:
     """
     Read a possibly large Redis list in chunks.

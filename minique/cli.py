@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import argparse
 import logging
-from typing import List, Optional
 
 from redis import StrictRedis
 
@@ -17,7 +18,7 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[List[str]] = None) -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = get_parser()
     args = parser.parse_args(argv)
     logging.basicConfig(datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)

@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Callable, Dict, Optional, Type, Union
+from collections.abc import Callable
+from typing import Any
 
 registry = {}
-default_encoding_name: Optional[str] = None
+default_encoding_name: str | None = None
 
 
 def register_encoding(
     name: str, *, default: bool = False
-) -> Callable[[Type["BaseEncoding"]], Type["BaseEncoding"]]:
-    def decorator(cls: Type["BaseEncoding"]) -> Type["BaseEncoding"]:
+) -> Callable[[type[BaseEncoding]], type[BaseEncoding]]:
+    def decorator(cls: type[BaseEncoding]) -> type[BaseEncoding]:
         global default_encoding_name
         registry[name] = cls
         if default:
@@ -19,7 +22,7 @@ def register_encoding(
 
 
 class BaseEncoding:
-    def encode(self, value: Any, failsafe: bool = False) -> Union[str, bytes]:
+    def encode(self, value: Any, failsafe: bool = False) -> str | bytes:
         """
         Encode a value to a string or bytes.
 
@@ -28,7 +31,7 @@ class BaseEncoding:
         """
         raise NotImplementedError("Encoding not implemented")
 
-    def decode(self, value: Union[str, bytes]) -> Any:
+    def decode(self, value: str | bytes) -> Any:
         raise NotImplementedError("Decoding not implemented")
 
 
@@ -39,14 +42,14 @@ class JSONEncoding(BaseEncoding):
     """
 
     # These can be effortlessly overridden in subclasses
-    dump_kwargs: Dict[str, Any] = {
+    dump_kwargs: dict[str, Any] = {
         "ensure_ascii": False,
         "separators": (",", ":"),
     }
-    load_kwargs: Dict[str, Any] = {}
+    load_kwargs: dict[str, Any] = {}
     failsafe_default = str
 
-    def encode(self, value: Any, failsafe: bool = False) -> Union[str, bytes]:
+    def encode(self, value: Any, failsafe: bool = False) -> str | bytes:
         kwargs = self.dump_kwargs.copy()
         if failsafe:
             kwargs["default"] = self.failsafe_default
@@ -55,7 +58,7 @@ class JSONEncoding(BaseEncoding):
             **kwargs,
         )
 
-    def decode(self, value: Union[str, bytes]) -> Any:
+    def decode(self, value: str | bytes) -> Any:
         if isinstance(value, bytes):
             value = value.decode()
         return json.loads(value, **self.load_kwargs)
