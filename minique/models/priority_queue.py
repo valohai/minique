@@ -1,10 +1,12 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
-from redis import Redis
+from typing import TYPE_CHECKING
 
 from minique.models.queue import Queue
 
 if TYPE_CHECKING:
+    from redis import Redis
+
     from minique.models.job import Job
 
 
@@ -98,7 +100,7 @@ class PriorityQueue(Queue):
     remove stale keys from the priority lookup hash.
     """
 
-    def __init__(self, redis: "Redis[bytes]", name: str):
+    def __init__(self, redis: Redis[bytes], name: str):
         super().__init__(redis, name)
         self.add_job_script = redis.register_script(ADD_JOB_SCRIPT)
         self.hash_clean_script = redis.register_script(PRIO_HASH_CLEANER_SCRIPT)
@@ -107,7 +109,7 @@ class PriorityQueue(Queue):
     def prio_key(self) -> str:
         return f"{self.redis_key}prio"
 
-    def add_job(self, job: "Job") -> int:
+    def add_job(self, job: Job) -> int:
         script_response = self.add_job_script(
             keys=[self.redis_key, self.prio_key, job.redis_key],
             args=[self.redis_key, self.prio_key, job.redis_key, job.id],
@@ -122,7 +124,7 @@ class PriorityQueue(Queue):
         num_removed = self.redis.lrem(self.redis_key, 0, job_id)
         return num_removed > 0
 
-    def clean_job(self, job: "Job") -> None:
+    def clean_job(self, job: Job) -> None:
         """Cleans up job data after the job has exited the queue."""
         self.redis.hdel(self.prio_key, job.id)
 

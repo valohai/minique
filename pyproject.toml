@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Minimal Redis job runner"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     { name = "Valohai", email = "hait@valohai.com" },
 ]
@@ -61,9 +61,13 @@ select = [
     "C9",
     "E",
     "F",
+    "FA100",
+    "I",
     "PGH003",
     "T2",
+    "TC002",
     "TRY201",
+    "UP",
     "W",
 ]
 
