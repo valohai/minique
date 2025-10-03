@@ -1,24 +1,30 @@
 # minique /miniːk/
 
-A minimal Redis 4.0+ job queue for Python 3.10 and above.
+A minimal Redis 4.0+/Valkey job queue for Python 3.10 and above.
 
 ## Requirements
 
+### Client
+
 * Python 3.10+
-* Redis 4.0+
+* Either redis-py 2.10+, or valkey 6.0
+
+### Server
+
+* A Redis 4.0+ or Valkey server
 
 ## Usage
 
-- Have a Redis 4.0+ server running.
+- Have a Redis 4.0+ or Valkey server running.
 
 ### Client
 
 ```python
-from redis import StrictRedis
+from redis import Redis  # (or from valkey import Valkey as Redis)
 from minique.api import enqueue, get_job
 
 # Get a Redis connection, somehow.
-redis = StrictRedis.from_url('redis://localhost:6379/4')
+redis = Redis.from_url('redis://localhost:6379/4')
 
 job = enqueue(
     redis=redis,
@@ -62,11 +68,11 @@ processed.
 Priority queue requires Lua scripting permissions from the Redis queue service.
 
 ```python
-from redis import StrictRedis
+from redis import Redis  # (or from valkey import Valkey as Redis)
 from minique.api import enqueue_priority, get_job
 
 # Get a Redis connection, somehow.
-redis = StrictRedis.from_url('redis://localhost:6379/4')
+redis = Redis.from_url('redis://localhost:6379/4')
 
 job = enqueue_priority(
     redis=redis,

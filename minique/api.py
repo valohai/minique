@@ -13,11 +13,11 @@ from minique.models.queue import Queue
 from minique.utils import get_random_pronounceable_string
 
 if TYPE_CHECKING:
-    from redis import Redis
+    from minique.types import RedisClient
 
 
 def enqueue(
-    redis: Redis[bytes],
+    redis: RedisClient,
     queue_name: str,
     callable: Callable[..., Any] | str,
     kwargs: dict[str, Any] | None = None,
@@ -55,7 +55,7 @@ def enqueue(
 
 
 def enqueue_priority(
-    redis: Redis[bytes],
+    redis: RedisClient,
     queue_name: str,
     callable: Callable[..., Any] | str,
     kwargs: dict[str, Any] | None = None,
@@ -96,7 +96,7 @@ def enqueue_priority(
 
 
 def store(
-    redis: Redis[bytes],
+    redis: RedisClient,
     callable: Callable[..., Any] | str,
     kwargs: dict[str, Any] | None = None,
     job_id: str | None = None,
@@ -129,7 +129,7 @@ def store(
 
 
 def get_job(
-    redis: Redis[bytes],
+    redis: RedisClient,
     job_id: str,
 ) -> Job:
     job = Job(redis, job_id)
@@ -138,7 +138,7 @@ def get_job(
 
 
 def cancel_job(
-    redis: Redis[bytes],
+    redis: RedisClient,
     job_id: str,
     expire_time: int | None = None,
 ) -> bool:
@@ -173,7 +173,7 @@ def cancel_job(
 
 def _define_and_store_job(
     *,
-    redis: Redis[bytes],
+    redis: RedisClient,
     callable: Callable[..., Any] | str,
     kwargs: dict[str, Any] | None = None,
     job_id: str | None = None,

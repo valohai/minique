@@ -10,8 +10,6 @@ import traceback
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from redis import Redis
-
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidJob
 from minique.models.job import Job
@@ -27,7 +25,7 @@ class JobRunner:
         self.worker = worker
         self.job = job
         self.redis = job.redis
-        assert isinstance(self.redis, Redis)
+        assert hasattr(self.redis, "hset")  # Smells redisy enough for us.
         self.log: logging.Logger = logging.getLogger(
             f"{__name__}.{str(self.job.id).replace('.', '_')}"
         )

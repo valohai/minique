@@ -13,9 +13,7 @@ from minique.models.queue import Queue
 from minique.work.job_runner import JobRunner
 
 if TYPE_CHECKING:
-    from redis import Redis
-
-    from minique.types import ContextDict, ExcInfo
+    from minique.types import ContextDict, ExcInfo, RedisClient
 
 
 class Worker:
@@ -27,7 +25,7 @@ class Worker:
 
     def __init__(
         self,
-        redis: Redis[bytes],
+        redis: RedisClient,
         queues: list[Queue],
     ) -> None:
         self.id = self.compute_id()
@@ -39,7 +37,7 @@ class Worker:
     @classmethod
     def for_queue_names(
         cls,
-        redis: Redis[bytes],
+        redis: RedisClient,
         queue_names: list[str] | str,
         **kwargs: Any,
     ) -> Worker:
