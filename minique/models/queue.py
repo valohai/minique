@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 from minique.consts import QUEUE_KEY_PREFIX
 from minique.excs import NoSuchJob
-from minique.utils import cached_property
 from minique.utils.redis_list import read_list
 
 if TYPE_CHECKING:
