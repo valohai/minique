@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import fnmatch
-import json
 import logging
 import random
 import sys
@@ -12,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from minique.enums import JobStatus
 from minique.excs import AlreadyAcquired, AlreadyResulted, InvalidJob
+from minique.json import to_json_str
 from minique.models.job import Job
 from minique.utils import _set_current_job, import_by_string
 
@@ -32,7 +32,7 @@ class JobRunner:
         job.ensure_exists()
 
     def acquire(self) -> None:
-        new_acquisition_info = json.dumps(self.get_acquisition_info(), default=str)
+        new_acquisition_info = to_json_str(self.get_acquisition_info(), default=str)
         if not self.redis.hsetnx(self.job.redis_key, "acquired", new_acquisition_info):
             raise AlreadyAcquired(
                 f"job {self.job.id} already acquired: {self.job.acquisition_info}"

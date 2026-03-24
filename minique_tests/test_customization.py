@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 import pytest
 
 from minique.api import enqueue
-from minique.encoding import JSONEncoding, register_encoding
+from minique.encoding import BaseEncoding, register_encoding
 from minique.testing import run_synchronously
 from minique.work.job_runner import JobRunner
 from minique_tests.worker import TestWorker
@@ -27,9 +28,19 @@ def special_load(o):
 
 
 @register_encoding("special_json")
-class SpecialJSONEncoding(JSONEncoding):
-    load_kwargs = dict(JSONEncoding.load_kwargs, object_hook=special_load)
-    dump_kwargs = dict(JSONEncoding.dump_kwargs, default=special_dump)
+class SpecialJSONEncoding(BaseEncoding):
+    def encode(self, value, failsafe=False):
+        return json.dumps(
+            value,
+            default=special_dump,
+            ensure_ascii=False,
+            separators=(",     ", "     :"),  # why would you?
+        )
+
+    def decode(self, value):
+        if isinstance(value, bytes):
+            value = value.decode()
+        return json.loads(value, object_hook=special_load)
 
 
 class HonkJobRunner(JobRunner):

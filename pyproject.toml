@@ -23,6 +23,9 @@ valkey = [
 sentry = [
     "sentry-sdk~=2.36",
 ]
+orjson = [
+    "orjson",
+]
 
 [project.scripts]
 minique = "minique.cli:main"
@@ -37,6 +40,10 @@ path = "minique/__init__.py"
 include = [
     "/minique",
 ]
+
+[[tool.mypy.overrides]]
+module = "orjson.*"
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "sentry_sdk.*"
