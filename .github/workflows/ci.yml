@@ -26,6 +26,7 @@ jobs:
           - { python-version: '3.12', install-extra: '[redis]' }
           - { python-version: '3.13', install-extra: '[redis]' }
           - { python-version: '3.13', install-extra: '[redis,sentry]'}
+          - { python-version: '3.13', install-extra: '[redis,sentry,orjson]'}
           # With the Valkey server
           - { python-version: '3.13', install-extra: '[redis]', redis-image: 'valkey/valkey:8'}
           # With the Valkey client and Valkey server

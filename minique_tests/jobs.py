@@ -1,5 +1,5 @@
-import datetime
 import queue
+import threading
 import time
 
 from minique.utils import get_current_job
@@ -19,8 +19,8 @@ def wrap_kwargs(**kwargs):
     return dict(kwargs.copy())
 
 
-def job_with_unjsonable_retval() -> datetime.datetime:
-    return datetime.datetime.now()
+def job_with_unjsonable_retval() -> threading.Lock:
+    return threading.Lock()
 
 
 def reverse_job_id() -> str:

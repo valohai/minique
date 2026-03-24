@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import time
 from collections.abc import Callable
 from functools import cached_property
@@ -16,6 +15,7 @@ from minique.excs import (
     MissingJobData,
     NoSuchJob,
 )
+from minique.json import from_json
 
 if TYPE_CHECKING:
     from minique.models.priority_queue import PriorityQueue
@@ -82,7 +82,7 @@ class Job:
         # Acquisition info is always stored as JSON, not with the `encoding`
         acquisition_json = self.redis.hget(self.redis_key, "acquired")
         if acquisition_json:
-            return json.loads(acquisition_json.decode())  # type: ignore[no-any-return]
+            return from_json(acquisition_json)  # type: ignore[no-any-return]
         return None
 
     @property

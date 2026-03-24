@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Callable
 from typing import Any
+
+from minique.json import from_json, to_json_bytes
 
 registry = {}
 default_encoding_name: str | None = None
@@ -41,24 +42,17 @@ class JSONEncoding(BaseEncoding):
     Default (JSON) encoding for kwargs and results.
     """
 
-    # These can be effortlessly overridden in subclasses
-    dump_kwargs: dict[str, Any] = {
-        "ensure_ascii": False,
-        "separators": (",", ":"),
-    }
-    load_kwargs: dict[str, Any] = {}
-    failsafe_default = str
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        for attr in ("dump_kwargs", "load_kwargs", "failsafe_default"):
+            if attr in cls.__dict__:
+                raise TypeError(
+                    f"{cls.__name__} sets removed attribute {attr!r}; "
+                    f"override encode()/decode() directly instead",
+                )
 
     def encode(self, value: Any, failsafe: bool = False) -> str | bytes:
-        kwargs = self.dump_kwargs.copy()
-        if failsafe:
-            kwargs["default"] = self.failsafe_default
-        return json.dumps(
-            value,
-            **kwargs,
-        )
+        return to_json_bytes(value, default=str if failsafe else None)
 
     def decode(self, value: str | bytes) -> Any:
-        if isinstance(value, bytes):
-            value = value.decode()
-        return json.loads(value, **self.load_kwargs)
+        return from_json(value)

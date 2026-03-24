@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import time
-import uuid
 from typing import TYPE_CHECKING
 
 import pytest
@@ -41,7 +40,7 @@ def check_sentry_event_calls(sentry_event_calls, num_expected: int):
 
 def test_unjsonable_arg(redis: RedisClient, random_queue_name: str):
     kwargs = {
-        "phooey": uuid.uuid4(),
+        "phooey": object(),
     }
     with pytest.raises(TypeError):
         enqueue(redis, random_queue_name, job_with_unjsonable_retval, kwargs)

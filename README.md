@@ -98,7 +98,14 @@ job.cleanup()
 job = get_job(redis, job_id)
 ```
 
-## Sentry Support
+## Library support
+
+### orjson
+
+If [`orjson`](https://github.com/ijl/orjson) is installed,
+it will automatically be used for faster JSON serialization and deserialization of job arguments and results.
+
+### Sentry
 
 Minique automatically integrates with the [Sentry](https://sentry.io/welcome/)
 exception tracking service.
