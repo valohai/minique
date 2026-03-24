@@ -75,7 +75,9 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           python-version: '3.13'
-      - run: uv run --all-extras mypy --strict --install-types --non-interactive --show-error-codes minique
+          activate-environment: 'true'
+      # `mypy` requires `pip` to install types...
+      - run: uv run --with=pip --all-extras mypy --strict --install-types --non-interactive --show-error-codes minique
 
   Build:
     runs-on: ubuntu-24.04
