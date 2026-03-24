@@ -207,8 +207,12 @@ class Job:
         # and use the default encoding.
         return encoding.default_encoding_name or "no default encoding set"
 
-    def get_encoding(self) -> encoding.BaseEncoding:
+    @cached_property
+    def _cached_encoding(self) -> encoding.BaseEncoding:
         return encoding.registry[self.encoding_name]()
+
+    def get_encoding(self) -> encoding.BaseEncoding:
+        return self._cached_encoding
 
     def get_queue(self) -> Queue | PriorityQueue:
         from minique.models.priority_queue import PriorityQueue
