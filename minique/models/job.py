@@ -28,6 +28,10 @@ class Job:
     replacement_callable: Callable[..., Any] | None = None
     replacement_kwargs: dict[str, Any] | None = None
 
+    # Set by Worker.get_next_job() if affinity is in use.
+    source_queue_key: str | None = None
+    affinity_specifier: str | None = None
+
     def __init__(self, redis: RedisClient, id: str) -> None:
         self.redis = redis
         self.id = str(id)
@@ -56,9 +60,18 @@ class Job:
 
     def dequeue(self) -> bool:
         """
-        Remove the job from the queue without changing its status.
+        Remove the job from its queue(s) without changing its status.
+
+        Removes the job from its base queue and from every affinity sub-queue it was
+        dual-written to, so a dequeued (or cancelled) affine job can't still be popped
+        from a warm worker's sub-queue.
+
+        :return: True if the job was removed from at least one queue.
         """
-        return self.get_queue().dequeue_job(self.id)
+        queue = self.get_queue()
+        if affinity := self.affinity:
+            return queue.dequeue_affine_job(self.id, affinity)
+        return queue.dequeue_job(self.id)
 
     def cleanup(self) -> bool:
         if self.has_priority:
@@ -84,6 +97,13 @@ class Job:
         if acquisition_json:
             return from_json(acquisition_json)  # type: ignore[no-any-return]
         return None
+
+    @cached_property  # Affinities are considered immutable.
+    def affinity(self) -> list[str]:
+        return _decode_affinity(self.redis.hget(self.redis_key, "affinity"))
+
+    def _cache_affinity(self, affinity_json: bytes | str | None) -> None:
+        self.__dict__["affinity"] = _decode_affinity(affinity_json)
 
     @property
     def has_finished(self) -> int:
@@ -240,3 +260,9 @@ class Job:
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Job) and (self.id == other.id)
+
+
+def _decode_affinity(affinity_json: bytes | str | None) -> list[str]:
+    if affinity_json:
+        return from_json(affinity_json)  # type: ignore[no-any-return]
+    return []

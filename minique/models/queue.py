@@ -1,21 +1,25 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from minique.consts import QUEUE_KEY_PREFIX
 from minique.excs import NoSuchJob
+from minique.utils.affinity import affinity_queue_name_glob, get_affinity_sub_queue_key
 from minique.utils.redis_list import read_list
 
 if TYPE_CHECKING:
     from minique.models.job import Job
-    from minique.types import RedisClient
+    from minique.types import RedisClient, RedisPipeline
 
 
 class Queue:
     def __init__(self, redis: RedisClient, name: str) -> None:
         self.redis = redis
         self.name = str(name)
+        if "*" in self.name:
+            raise ValueError("Queue name may not contain '*'")
 
     @cached_property
     def redis_key(self) -> str:
@@ -25,11 +29,22 @@ class Queue:
     def length(self) -> int:
         return self.redis.llen(self.redis_key)
 
-    def clear(self) -> Any:
+    def clear(self) -> int:
         """
         Entirely clear this queue. Do not call this unless you're willing to risk orphaned jobs.
+
+        This also deletes any affinity sub-queues dual-written for this queue,
+        and priority lookup hashes.
+
+        :return: The number of Redis keys deleted.
         """
-        return self.redis.delete(self.redis_key)
+        return self.redis.delete(*(self._get_clear_keys()))
+
+    def _get_clear_keys(self) -> Iterable[str | bytes]:
+        yield self.redis_key
+        yield from self.redis.scan_iter(
+            match=f"{QUEUE_KEY_PREFIX}{affinity_queue_name_glob(self.name)}",
+        )
 
     def get_queue_index(self, job: Job) -> int | None:
         # TODO: use `LPOS` (https://redis.io/commands/lpos/) when available for this
@@ -73,7 +88,24 @@ class Queue:
         """
         return self.redis.rpush(self.redis_key, job.id) - 1
 
+    def add_job_to_pipeline(self, pipeline: RedisPipeline, job: Job) -> None:
+        """Queue this job's enqueue command onto `pipeline` (no index returned)."""
+        pipeline.rpush(self.redis_key, job.id)
+
     def dequeue_job(self, job_id: str) -> bool:
         """Dequeue the job with the given job ID"""
         num_removed = self.redis.lrem(self.redis_key, 0, job_id)
         return num_removed > 0
+
+    def dequeue_affine_job(self, job_id: str, affinity_keys: list[str]) -> bool:
+        with self.redis.pipeline(transaction=False) as p:
+            # Dequeue from main queue, and any affine subqueues.
+            for list_key in [
+                self.redis_key,
+                *(
+                    get_affinity_sub_queue_key(self.name, specifier)
+                    for specifier in affinity_keys
+                ),
+            ]:
+                p.lrem(list_key, 0, job_id)
+            return any(p.execute())
