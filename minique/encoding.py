@@ -5,7 +5,7 @@ from typing import Any
 
 from minique.json import from_json, to_json_bytes
 
-registry = {}
+registry: dict[str, type[BaseEncoding]] = {}
 default_encoding_name: str | None = None
 
 
