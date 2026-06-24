@@ -27,10 +27,12 @@ def redis_url() -> str:
 
 
 @pytest.fixture()
-def redis(redis_url: str) -> RedisClient:
+def redis(request, redis_url: str) -> RedisClient:
     from minique.cli import get_redis
 
-    return get_redis(redis_url)
+    client = get_redis(redis_url)
+    request.addfinalizer(client.close)
+    return client
 
 
 @pytest.fixture()
