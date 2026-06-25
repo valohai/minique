@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     import redis
 
     RedisClient: TypeAlias = redis.Redis[bytes]
+    RedisPipeline: TypeAlias = redis.client.Pipeline[bytes]
 
     # TODO: the types for `valkey` are suboptimal (since they are so in the original
     #       pre-fork `redis` package), so adding `| valkey.Valkey` to the above type alias

@@ -7,7 +7,7 @@ import pytest
 
 from minique.api import enqueue
 from minique.enums import JobStatus
-from minique.excs import AlreadyAcquired, DuplicateJob, NoSuchJob
+from minique.excs import DuplicateJob
 from minique.models.queue import Queue
 from minique_tests.jobs import job_with_unjsonable_retval
 from minique_tests.worker import TestWorker
@@ -64,8 +64,8 @@ def test_disappeared_job(redis: RedisClient, random_queue_name: str):
     assert Queue(redis, random_queue_name).length == 1
     time.sleep(2)
     worker = TestWorker.for_queue_names(redis, random_queue_name)
-    with pytest.raises(NoSuchJob):  # It's expired :(
-        worker.tick()
+    # The job hash has expired; the lingering queue entry is a phantom, quietly skipped.
+    assert worker.tick() is None
 
 
 def test_rerun_done_job(redis: RedisClient, random_queue_name: str, sentry_event_calls):
@@ -77,9 +77,10 @@ def test_rerun_done_job(redis: RedisClient, random_queue_name: str, sentry_event
     # but let's re-enqueue the job anyway by touching some internals:
     queue = Queue(redis, random_queue_name)
     redis.rpush(queue.redis_key, job.id)
-    with pytest.raises(AlreadyAcquired):
-        worker.tick()
-    check_sentry_event_calls(sentry_event_calls, 2)
+    # A re-enqueued, already-finished job is a phantom: skipped quietly, not re-run.
+    assert worker.tick() is None
+    # Only the original run produced an (error) event; the phantom skip produced none.
+    check_sentry_event_calls(sentry_event_calls, 1)
 
 
 def test_duplicate_names(redis: RedisClient, random_queue_name: str):

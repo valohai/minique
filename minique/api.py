@@ -7,10 +7,20 @@ from typing import TYPE_CHECKING, Any
 import minique.encoding as encoding
 from minique.enums import JobStatus
 from minique.excs import DuplicateJob
+from minique.json import to_json_bytes
 from minique.models.job import Job
 from minique.models.priority_queue import PriorityQueue
 from minique.models.queue import Queue
 from minique.utils import get_random_pronounceable_string
+from minique.utils.affinity import (
+    get_affinity_queue_name,
+    get_affinity_sub_queue_names,
+    normalize_affinity,
+)
+from minique.utils.cleaning import (
+    remove_orphaned_prio_hashes,
+    trim_phantom_ids,
+)
 
 if TYPE_CHECKING:
     from minique.types import RedisClient
@@ -25,6 +35,7 @@ def enqueue(
     job_ttl: int = 0,
     result_ttl: int = 86400 * 7,
     encoding_name: str | None = None,
+    affinity: list[str] | None = None,
 ) -> Job:
     """
     Queue up callable as a job.
@@ -37,11 +48,15 @@ def enqueue(
     :param job_ttl: Time-to-live for the job in seconds; defaults to never expire.
     :param result_ttl: Time-to-live for the result in seconds; defaults to 7 days.
     :param encoding_name: Name of the encoding to use for the job payload; defaults to JSON.
+    :param affinity: Optional best-effort affinity specifiers (e.g. dataset IDs or
+                     image digests). Workers that recently ran jobs with the same
+                     specifier will prefer to pick this job up, to exploit warm caches.
+                     This is purely an optimization; the job is always reachable on the
+                     base queue regardless.
     :raises minique.excs.DuplicateJob: If a job with the same ID already exists.
     :raises minique.excs.NoSuchJob: If the job does not exist right after creation.
     """
-    queue = Queue(redis, queue_name)
-    job = _define_and_store_job(
+    return _define_and_store_job(
         redis=redis,
         callable=callable,
         kwargs=kwargs,
@@ -49,9 +64,9 @@ def enqueue(
         job_ttl=job_ttl,
         result_ttl=result_ttl,
         encoding_name=encoding_name,
-        queue=queue,
+        queue=Queue(redis, queue_name),
+        affinity=affinity,
     )
-    return job
 
 
 def enqueue_priority(
@@ -64,6 +79,7 @@ def enqueue_priority(
     result_ttl: int = 86400 * 7,
     encoding_name: str | None = None,
     priority: int = 0,
+    affinity: list[str] | None = None,
 ) -> Job:
     """
     Queue up callable as a job, placing the job at the last place for its priority.
@@ -77,11 +93,17 @@ def enqueue_priority(
     :param result_ttl: Time-to-live for the result in seconds; defaults to 7 days.
     :param encoding_name: Name of the encoding to use for the job payload; defaults to JSON.
     :param priority: Priority number of this job, defaults to zero.
+    :param affinity: Optional best-effort affinity specifiers; see `enqueue`. Each
+                     affinity sub-queue is itself a priority queue, so within-affinity
+                     ordering still respects `priority`. Note that affinity outranks
+                     priority on a warm worker: it checks its affinity sub-queues before
+                     the base queue, so a lower-priority affine job can be picked up ahead
+                     of a higher-priority job in the base queue. Don't attach affinity to
+                     jobs that require strict global priority ordering.
     :raises minique.excs.DuplicateJob: If a job with the same ID already exists.
     :raises minique.excs.NoSuchJob: If the job does not exist right after creation.
     """
-    queue = PriorityQueue(redis, queue_name)
-    job = _define_and_store_job(
+    return _define_and_store_job(
         redis=redis,
         callable=callable,
         kwargs=kwargs,
@@ -89,10 +111,10 @@ def enqueue_priority(
         job_ttl=job_ttl,
         result_ttl=result_ttl,
         encoding_name=encoding_name,
-        queue=queue,
+        queue=PriorityQueue(redis, queue_name),
         priority=priority,
+        affinity=affinity,
     )
-    return job
 
 
 def store(
@@ -171,7 +193,7 @@ def cancel_job(
     return False
 
 
-def _define_and_store_job(
+def _define_and_store_job(  # noqa: C901
     *,
     redis: RedisClient,
     callable: Callable[..., Any] | str,
@@ -182,6 +204,7 @@ def _define_and_store_job(
     encoding_name: str | None = None,
     queue: Queue | None = None,
     priority: int | None = None,
+    affinity: list[str] | None = None,
 ) -> Job:
     if not encoding_name:
         encoding_name = encoding.default_encoding_name
@@ -211,14 +234,43 @@ def _define_and_store_job(
     if priority is not None:
         payload["priority"] = priority
 
+    if affinity := normalize_affinity(affinity):
+        payload["affinity"] = to_json_bytes(affinity)
+
     with redis.pipeline() as p:
         p.hset(job.redis_key, mapping=payload)  # type: ignore[arg-type]
         if payload["job_ttl"] > 0:
             p.expire(job.redis_key, payload["job_ttl"])
+
+        if queue:
+            if affinity:
+                queue.add_job_to_pipeline(p, job)
+                for specifier in affinity:
+                    sub_queue_name = get_affinity_queue_name(queue.name, specifier)
+                    sub_queue = type(queue)(redis, sub_queue_name)
+                    sub_queue.add_job_to_pipeline(p, job)
+            else:
+                queue.add_job_to_pipeline(p, job)
+
         p.execute()
 
-    if queue:
-        queue.add_job(job)
-
-    job.ensure_exists()
     return job
+
+
+def clean_affinity_sub_queues(
+    redis: RedisClient,
+    base: str,
+    *,
+    priority: bool = False,
+) -> int:
+    """Trim residue from `base`'s affinity sub-queues; returns the number of items removed.
+
+    This doesn't need to be called often.
+    """
+    removed = 0
+    for name in get_affinity_sub_queue_names(redis, base):
+        sub_queue = PriorityQueue(redis, name) if priority else Queue(redis, name)
+        removed += trim_phantom_ids(redis, sub_queue.redis_key, priority=priority)
+    if priority:
+        removed += remove_orphaned_prio_hashes(redis, base)
+    return removed
