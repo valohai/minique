@@ -66,7 +66,7 @@ mccabe.max-complexity = 10
 ignore = [
     "E501",
 ]
-select = [
+extend-select = [
     "B",
     "C9",
     "E",

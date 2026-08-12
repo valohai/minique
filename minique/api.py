@@ -4,7 +4,7 @@ import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-import minique.encoding as encoding
+from minique import encoding
 from minique.enums import JobStatus
 from minique.excs import DuplicateJob
 from minique.json import to_json_bytes
