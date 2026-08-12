@@ -118,9 +118,9 @@ class JobRunner:
             value = self.execute()
             encoded_value = encoding.encode(value)
             success = True
-        except BaseException as exc:
+        except BaseException as exc:  # noqa: BLE001 (BaseException exactly on purpose!)
             success = False
-            exc_type, exc_value, exc_tb = excinfo = sys.exc_info()
+            exc_type, exc_value, _exc_tb = excinfo = sys.exc_info()
             error_value = {
                 "exception_type": getattr(exc_type, "__qualname__", None),
                 "exception_value": str(exc_value),
@@ -142,8 +142,8 @@ class JobRunner:
                         duration=(end_time - start_time),
                     )
                     break
-                except AlreadyResulted as arx:
-                    self.log.error(str(arx), exc_info=True)
+                except AlreadyResulted:
+                    self.log.exception("Job %s already has a result", self.job.id)
                     break
                 except Exception:
                     # https://cloud.google.com/iot/docs/how-tos/exponential-backoff

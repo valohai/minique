@@ -258,7 +258,7 @@ class Job:
     def __str__(self) -> str:
         return f"<job {self.id}>"
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, Job) and (self.id == other.id)
 
 

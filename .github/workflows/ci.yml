@@ -25,12 +25,13 @@ jobs:
           - { python-version: '3.11', install-extra: '[redis]' }
           - { python-version: '3.12', install-extra: '[redis]' }
           - { python-version: '3.13', install-extra: '[redis]' }
-          - { python-version: '3.13', install-extra: '[redis,sentry]'}
-          - { python-version: '3.13', install-extra: '[redis,sentry,orjson]'}
+          - { python-version: '3.14', install-extra: '[redis]' }
+          - { python-version: '3.14', install-extra: '[redis,sentry]'}
+          - { python-version: '3.14', install-extra: '[redis,sentry,orjson]'}
           # With the Valkey server
-          - { python-version: '3.13', install-extra: '[redis]', redis-image: 'valkey/valkey:8'}
+          - { python-version: '3.14', install-extra: '[redis]', redis-image: 'valkey/valkey:8'}
           # With the Valkey client and Valkey server
-          - { python-version: '3.13', install-extra: '[valkey,sentry]', redis-image: 'valkey/valkey:8'}
+          - { python-version: '3.14', install-extra: '[valkey,sentry]', redis-image: 'valkey/valkey:8'}
     services:
       redis:
         image: ${{ matrix.redis-image || 'redis' }}
@@ -40,9 +41,9 @@ jobs:
       REDIS_URL: 'redis://localhost:6379/0'
       SENTRY_DSN: 'http://user:pass@localhost:12340/foo'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: 'Set up Python ${{ matrix.python-version }}'
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           python-version: '${{ matrix.python-version }}'
           activate-environment: true
@@ -50,7 +51,7 @@ jobs:
         env:
           EXTRA: '${{ matrix.install-extra }}'
       - run: uv run pytest -vvv --cov .
-      - uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
+      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: 'Python ${{ matrix.python-version }}'
@@ -58,12 +59,12 @@ jobs:
   Lint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           cache-dependency-glob: ".github/workflows/*.yml"
           cache-suffix: pre-commit-uv
-      - uses: actions/cache@v5
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-uv-v1-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -72,10 +73,10 @@ jobs:
   Mypy:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          python-version: '3.13'
+          python-version: '3.14'
           activate-environment: 'true'
       # `mypy` requires `pip` to install types...
       - run: uv run --with=pip --all-extras mypy --strict --install-types --non-interactive --show-error-codes minique
@@ -84,19 +85,19 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [ Lint, Mypy, Test ]
     steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          python-version: '3.13'
+          python-version: '3.14'
       - run: uv build
       - run: uvx twine check dist/*
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: build
           path: dist
       - name: Publish distribution to PyPI
         if: startsWith(github.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           print_hash: true
           password: ${{ secrets.PYPI_API_TOKEN }}
