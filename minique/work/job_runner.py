@@ -39,6 +39,15 @@ class JobRunner:
             )
         self.redis.hset(self.job.redis_key, "status", JobStatus.ACQUIRED.value)
         self.redis.persist(self.job.redis_key)
+        try:
+            if self.job.affinity:  # Best-effort dequeue this job from sub-queues.
+                self.job.dequeue()
+        except Exception:
+            self.log.warning(
+                "failed acquisition dequeue for job %s",
+                self.job.id,
+                exc_info=True,
+            )
 
     def get_acquisition_info(self) -> dict[str, Any]:
         # Override me in a subclass if you like!
@@ -93,6 +102,11 @@ class JobRunner:
         try:
             encoding = self.job.get_encoding()
             self.acquire()
+        except AlreadyAcquired:
+            # Expected with affinity dual-write: another worker won the same-instant pop
+            # race for one of this job's copies. Let the caller (Worker.tick) treat it as
+            # a quiet phantom; it is not an error worth reporting.
+            raise
         except Exception as exc:
             self.process_exception(sys.exc_info())
             raise exc  # could have had an exception in process_exception  # noqa: TRY201

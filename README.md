@@ -98,6 +98,42 @@ job.cleanup()
 job = get_job(redis, job_id)
 ```
 
+### Affinity
+
+Jobs can carry one or more opaque **affinity specifiers** — typically identifiers for
+something expensive to fetch, for instance.
+A worker that recently ran a job with a given specifier becomes "warm" for it and *prefers*
+to pick up further jobs with the same specifier.
+
+This is purely an optimization and never a constraint. Workers may always end up pulling jobs
+from the base queue, and jobs may be picked up by any worker regardless of affinity.
+
+```python
+from minique.api import enqueue
+
+# Two jobs that both need the same large dataset will prefer the same worker:
+job_a = enqueue(redis, 'training', 'my_jobs.train', kwargs={'fold': 0}, affinity=['dataset-42'])
+job_b = enqueue(redis, 'training', 'my_jobs.train', kwargs={'fold': 1}, affinity=['dataset-42'])
+```
+
+`enqueue_priority` accepts `affinity` too; each affinity sub-queue is itself a priority queue,
+so ordering within a specifier still respects `priority`.
+
+> **Affinity outranks priority on a warm worker.** Because a warm worker checks its affinity
+> sub-queues before the base queue, it can pick up a *lower*-priority affine job ahead of a
+> *higher*-priority job waiting in the base priority queue.
+
+#### Cleaning up sub-queue residue
+
+Affinity sub-queues self-heal while jobs for a specifier keep flowing. Once a specifier goes
+quiet, a little residue can linger (phantom ids for expired jobs, and orphaned `…prio` hashes
+for priority queues). Trim it on demand with
+
+`minique.api.clean_affinity_sub_queues(redis, base_queue_name, priority=...)`.
+
+The call is idempotent, best-effort, and safe to run concurrently from many workers, so the
+simplest approach is to fire it occasionally with e.g. `random.random() < 0.01`.
+
 ## Library support
 
 ### orjson
